@@ -1075,10 +1075,6 @@ Spring MVC 的简单原理图如下：
 4. **`HandlerAdapter`：**处理器适配器，通过HandlerAdapter对处理器进行执行。
 5. `View Resolver`：视图解析器，负责将处理结果生成view视图。View Resolver首先根据逻辑视图名解析成物理视图名即具体的页面地址，再生成View视图对象，最后对View进行渲染将处理结果通过页面展示给用户。springmvc框架提供了很多的View视图类型，包括：jstlView、freemarkerView、pdfView等。
 
-
-
-
-
 ##### [如何使用SpringMVC对用户写入的参数进行修改](https://www.cnblogs.com/wyhluckdog/p/10181134.html)
 
 - 基本数据类型接收表单数据
@@ -1129,6 +1125,187 @@ Spring MVC 的简单原理图如下：
             return "success";   
         }
     ```
+
+##### 拦截器和过滤器的区别
+
+###### **区别**
+
+```markdown
+**
+1. 拦截器是基于java的反射机制的，而过滤器是基于函数回调。
+2. 拦截器不依赖与servlet容器，过滤器依赖与servlet容器。
+3. 拦截器只能对action请求起作用，而过滤器则可以对几乎所有的请求起作用。
+4. 拦截器可以访问action上下文、值栈里的对象，而过滤器不能访问。
+5. 在action的生命周期中，拦截器可以多次被调用，而过滤器只能在容器初始化时被调用一次。
+6. 拦截器可以获取IOC容器中的各个bean，而过滤器就不行，这点很重要，在拦截器里注入一个service，可以调用业务逻辑。
+**
+```
+
+###### **拦截器(Interceptor)**
+
+> 拦截器的概念 
+
+java里的拦截器是动态拦截Action调用的对象，它提供了一种机制可以使开发者在一个Action执行的前后执行一段代码，也可以在一个Action执行前阻止其执行，同时也提供了一种可以提取Action中可重用部分代码的方式。在AOP中，拦截器用于在某个方法或者字段被访问之前进行拦截，然后在之前或者之后加入某些操作。
+
+> 拦截器的原理
+
+**拦截器是基于Java的反射机制实现的，拦截的对象只能是实现了接口的类**。所以拦截器只能拦截部分web请求。
+
+> 自定义拦截器的步骤
+
+- 自定义一个实现了 `Interceptor` 接口的类，或者继承抽象类 `AbstractInterceptor`。
+
+  - ```java
+    public interface HandlerInterceptor {
+            boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception;
+     
+            void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView var4) throws Exception;
+     
+            void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception var4) throws Exception;
+    }
+    ```
+
+  - ```markdown
+    > preHandle 方法：在进入具体的Controller方法之前执行。在这个方法体实现里可以做权限校验，以及其他公共检测（比如 安全校验等）。校验通过返回true，进入下一个拦截器或者直接进入Controller方法。第三个参数handler，表示待执行的Controller方法。
+    > postHandle方法：在具体Controller方法方法执行完成后，视图渲染之前执行。主要用途是在视图渲染前做一些通用的准备工作，可以把一些通用的数据放到第四个参数ModelAndView对象里，供视图渲染时使用。
+    > afterCompletion方法：在视图渲染完成之后执行，主要用于在返回页面之前做一些清理工作。比如最常见的使用场景：在preHandle方法中可以把用户的基本信息放到 ThreadLocal中，以便在同一次请求内的任意方法里都可以取到用户信息，由于spring mvc处理用户请求是用的线程池技术，ThreadLocal是与线程绑定的，如果不及时清理就会导致内存泄漏，这时我们必须在afterCompletion方法中调用ThreadLocal的清理方法，清除掉本次请求中的信息。
+    ```
+
+- `Spring` 需要在配置文件中注册这个定义的拦截器。`SpringBoot` 不需要注册，可以定义一个实现了 `WebMvcConfigurer`接口的类来表明自定义拦截器的作用范围。
+
+  - ```java
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+    
+        @Autowired
+        private SessionInterceptor sessionInterceptor;
+    
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(sessionInterceptor)
+                    .addPathPatterns("/**");
+        }
+    }
+    ```
+
+- `Spring`还需要在使用Action的地方引用上述定义的拦截器，为了方便也可以将拦截器定义为默认的拦截器，这样在不加特殊说明的情况下，所有的Action都被这个拦截器拦截。
+
+> 多个拦截器的执行顺序
+
+先注册的拦截器先输出。
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20200812220635390.png)
+
+###### **过滤器(Filter)**
+
+> Filter的概念
+
+Filter也称之为过滤器，它是Servlet技术中最激动人心的技术之一，WEB开发人员通过Filter技术，对web服务器管理的所有web资源：例如Jsp, Servlet, 静态图片文件或静态html文件等进行拦截，从而实现一些特殊的功能。例如实现URL级别的权限访问控制、过滤敏感词汇、压缩响应信息等一些高级功能。
+
+> Filter的工作原理
+
+```java
+public abstract interface Filter{
+    public abstract void init(FilterConfig paramFilterConfig) throws ServletException;
+    public abstract void doFilter(ServletRequest paramServletRequest, ServletResponse paramServletResponse, FilterChain 
+        paramFilterChain) throws IOException, ServletException;
+    public abstract void destroy();
+}
+```
+
+Filter接口中有一个 `doFilter` 方法，当我们编写好Filter, 并配置对哪个web资源进行拦截后，WEB服务器每次在调用web资源的service方法之前, 都会先调用一下filter的 `doFilter` 方法，因此，在该方法内编写代码可达到如下目的:
+
+1. 调用目标资源之前，让一段代码执行。
+2. 是否调用目标资源(即是否让用户访问web资源)。
+3. 调用目标资源之后，让一段代码执行。
+
+web服务器在调用doFilter方法时，会传递一个`filterChain`对象进来，`filterChain`对象是filter接口中最重要的一个对象，它也提供了一个`doFilter`方法，开发人员可以根据需求决定是否调用此方法，调用该方法，则web服务器就会调用web资源的service方法，即web资源就会被访问, 否则web资源不会被访问。
+
+> Filter的生命周期
+
+- `Filter`的创建
+
+  ```markdown
+  Filter的创建和销毁由web服务器负责。 web应用程序启动时，web服务器将创建Filter的实例对象，并调用其init方法，完成对象的初始化功能，从而为后续的用户请求作好拦截的准备工作，filter对象只会创建一次，init方法也只会执行一次。通过init方法的参数，可获得代表当前filter配置信息的FilterConfig对象。
+  ```
+
+- `Filter`的销毁
+
+  ```markdown
+  web容器调用destroy方法销毁Filter。destroy方法在Filter的生命周期中仅执行一次。在destroy方法中，可以释放过滤器使用的资源。
+  ```
+
+- `FilterConfig`接口
+  　　用户在配置filter时，可以使用`<init-param>`为filter配置一些初始化参数，当web容器实例化Filter对象，调用其init方法时，会把封装了filter初始化参数的filterConfig对象传递进来。因此开发人员在编写filter时，通过filterConfig对象的方法，就可获得：
+  　　String getFilterName()：得到filter的名称。
+  　　String getInitParameter(String name)： 返回在部署描述中指定名称的初始化参数的值。如果不存在返回null.
+  　　Enumeration getInitParameterNames()：返回过滤器的所有初始化参数的名字的枚举集合。
+  　　public ServletContext getServletContext()：返回Servlet上下文对象的引用。
+
+###### 监听器(Listener)
+
+现在来说说 `Servlet` 的监听器 `Listener`，它是实现了 `javax.servlet.ServletContextListener` 接口的服务器端程序，它也是**随web应用的启动而启动，只初始化一次**，随web应用的停止而销毁。主要作用是：做一些初始化的内容添加工作、设置一些基本的内容、比如一些参数或者是一些固定的对象等等。首先来看一下 `ServletContextListener` 接口的源代码:
+
+```java
+public abstract interface ServletContextListener extends EventListener{
+    public abstract void contextInitialized(ServletContextEvent paramServletContextEvent);
+    public abstract void contextDestroyed(ServletContextEvent paramServletContextEvent);
+}
+```
+
+**示例代码:**
+
+```java
+import javax.servlet.ServletContext;   
+import javax.servlet.ServletContextEvent;   
+import javax.servlet.ServletContextListener;   
+import org.apache.commons.dbcp.BasicDataSource;       
+/**
+ * 现在来说说Servlet的监听器Listener，它是实现了javax.servlet.ServletContextListener 接口的
+ * 服务器端程序，它也是随web应用的启动而启动，只初始化一次，随web应用的停止而销毁。主要作用是：做一些初始化
+ * 的内容添加工作、设置一些基本的内容、比如一些参数或者是一些固定的对象等等。
+ * 
+ * 示例代码：使用监听器对数据库连接池DataSource进行初始化
+ */ 
+public class ListenerTest implements ServletContextListener{     
+   // 应用监听器的销毁方法   
+   public void contextDestroyed(ServletContextEvent servletContextEvent) {   
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        // 在整个web应用销毁之前调用，将所有应用空间所设置的内容清空
+        servletContext.removeAttribute("dataSource");
+        System.out.println("销毁工作完成...");  
+   }   
+    // 应用监听器的初始化方法   
+    public void contextInitialized(ServletContextEvent servletContextEvent) {   
+        // 通过这个事件可以获取整个应用的空间   
+        // 在整个web应用下面启动的时候做一些初始化的内容添加工作   
+        ServletContext servletContext = servletContextEvent.getServletContext();  
+        // 设置一些基本的内容；比如一些参数或者是一些固定的对象   
+        // 创建DataSource对象，连接池技术 dbcp   
+        BasicDataSource basicDataSource = new BasicDataSource(); 
+        basicDataSource.setDriverClassName("com.jdbc.Driver"); 
+        basicDataSource.setUrl("jdbc:mysqlocalhost:3306/"); 
+        basicDataSource.setUsername("root");   
+        basicDataSource.setPassword("root");   
+        basicDataSource.setMaxActive(10);//最大连接数   
+        basicDataSource.setMaxIdle(5);//最大管理数   
+        //bds.setMaxWait(maxWait); 最大等待时间   
+        // 把 DataSource 放入ServletContext空间中，   
+        // 供整个web应用的使用(获取数据库连接)
+        servletContext.setAttribute("dataSource", basicDataSource);   
+        System.out.println("应用监听器初始化工作完成...");   
+        System.out.println("已经创建DataSource...");  
+    }   
+}
+```
+
+##### RESTful API
+
+https://www.cnblogs.com/bigsai/p/14099154.html
+
+
+
+**************
 
 #### Spring 事务
 
@@ -1555,4 +1732,29 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 - Spring 是一个 IOC 容器，用来管理Bean，使用依赖注入实现控制反转，可以很方便的整合各种框架，提供AOP机制弥补面向对象的代码重复问题，更方便将不同类不同方法中的共同处理成切面、自动注入给方法执行，比如日志、异常等。
 - SpringMVC 是 Spring 对 web 框架的一个解决方法，提供了一个总的前端控制器 `Servlet` ，用来接收请求，然后定义了一套路由策略（url到handle的映射）及适配执行handle，将handle的结构使用视图解析技术生成视图展示给前端
 - Spring Boot是Spring提供的一个快速开发工具包，让程序员可以更方便、更快速地开发Spring+SpringMVC的应用，简化了配置（约定大于配置），整合了一系列的解决方案（starter机制）、redis、mongodb、es，可以开箱即用。
+
+#### Maven的生命周期
+
+Maven有三套相互独立的生命周期，分别是clean、default和site。每个生命周期包含一些阶段(phase)，阶段是有顺序的，后面的阶段依赖于前面的阶段。
+
+1. **clean生命周期**：清理项目，包含三个phase。
+   1. pre-clean：执行清理前需要完成的工作
+   2. clean：清理上一次构建生成的文件
+   3. post-clean：执行清理后需要完成的工作
+2. **default生命周期**：构建项目，重要的phase如下。
+   1. validate：验证工程是否正确，所有需要的资源是否可用。
+   2. compile：编译项目的源代码。  
+   3. test：使用合适的单元测试框架来测试已编译的源代码。这些测试不需要已打包和布署。
+   4. Package：把已编译的代码打包成可发布的格式，比如jar。
+   5. integration-test：如有需要，将包处理和发布到一个能够进行集成测试的环境。
+   6. verify：运行所有检查，验证包是否有效且达到质量标准。
+   7. install：把包安装到maven本地仓库，可以被其他工程作为依赖来使用。
+   8. Deploy：在集成或者发布环境下执行，将最终版本的包拷贝到远程的repository，使得其他的开发者或者工程可以共享。
+3. **site生命周期**：建立和发布项目站点，phase如下
+   1. pre-site：生成项目站点之前需要完成的工作
+   2. site：生成项目站点文档
+   3. post-site：生成项目站点之后需要完成的工作
+   4. site-deploy：将项目站点发布到服务器
+
+
 
