@@ -412,15 +412,14 @@ public class Test {
 
 #### ArrayList与LinkedList
 
-1. **是否保证线程安全：**`ArayList `和`LinkedList `都是**不同步的，也就是不保证线程安全**；
+1. **是否保证线程安全：**`ArrayList `和`LinkedList `都是**不同步的，也就是不保证线程安全**；
 
-2. **底层数据结构：Arraylist底层使用的是Object数组**; **LinkedList 底层使用的是双向链表数据**结构。
+2. **底层数据结构：Arraylist底层使用的是Object数组**; **LinkedList 底层使用的是双向链表**。
 
 3. **插入和删除是否受元素位置的影响：**
 
-   ​	ArrayList 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行`add(E e)`方法的时候，ArrayList 会默认在将指定的元素追加到此列表的未尾，这种情况时间复杂度就是`O(1)`。但是如果要在指定位置i插入和删除元素的话`(add(int index，Eelement))`时间复杂度就为`o(n-i)`。因为在进行上述操作的时候集合中第i和第i个元素之后的`(n-i)`个元素都要执行向后位/向前移一位的操作。
-
-   ​	LinkedList采用链表存储，所以对于`add(E e)`方法的插入，删除元素时间复杂度不受元素位置的影响，近似`O(1)`，如果是要在指定位置i插入和删除元素的话`((add(int index，E element))`时间复杂度近似为`o(n)`，因为需要先移动到指定位置再插入。
+   - `ArrayList` 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行`add(E e)`方法的时候，ArrayList 会默认在将指定的元素追加到此列表的未尾，这种情况时间复杂度就是`O(1)`。但是如果要在指定位置 `i` 插入和删除元素的话`(add(int index，Eelement))`时间复杂度就为`o(n-i)`。因为在进行上述操作的时候集合中第 `i` 和第 `i` 个元素之后的`(n-i)`个元素都要执行向后位/向前移一位的操作。
+   - `LinkedList` 采用链表存储，所以对于`add(E e)`方法的插入，删除元素时间复杂度不受元素位置的影响，近似`O(1)`，如果是要在指定位置 `i` 插入和删除元素的话`(add(int index，E element)` 时间复杂度近似为`o(n)`，因为需要先移动到指定位置再插入。
 
 4. **是否支持快速随机访问**：**`LinkedList `不支持高效的随机元素访问，而 `ArrayList `支持。**快速随机访问就是通过元素的序号快速获取元素对象(对应于 `get(int index)` 方法)。
 
@@ -431,13 +430,13 @@ public class Test {
    ```markdown
    **
    > 如果应用场景对数据有较多的随机访问，ArrayList 要优于 LinkedList;
-   > 如果应用场景有更多的插入或者删除操作，较少的随机访问操作，LinkList 要优于 ArrayList
+   > 如果应用场景有更多的插入或者删除操作，较少的随机访问操作，LinkedList 要优于 ArrayList
    # 不过ArrayList的插入、删除不一定比LinkedList慢，如果在ArrayList靠近末尾的地方插入，那么ArrayList只需要移动较少的元素，而LinkedList则需要一直查找到列表尾部，反而耗费较多时间。
    ```
 
 #### 使用ArrayList时需要注意的点
 
-1. 尽量使用 `new ArrayList` 创建 `List `对象，不要用 `Arrays.asList` 创建List对象，因为 `Arrays.asList` 创建List对象是通过 `Arrays` 的内部类继承 `AbstractList` 类获取 `List `对象，但是没有对 `AbstractList `类中的 `add`、`remove `等方法进行重写，当使用这些方法时会报 `UnsupportedOperationException()` 异常。
+1. 尽量使用 `new ArrayList` 创建 `List `对象，不要用 `Arrays.asList` 创建 `List` 对象，因为 `Arrays.asList` 创建 `List` 对象是通过 `Arrays` 的内部类继承 `AbstractList` 类获取 `List `对象，但是没有对 `AbstractList `类中的 `add`、`remove `等方法进行重写，当使用这些方法时会报 `UnsupportedOperationException()` 异常。
 2. **循环遍历的过程中删除集合中的元素**时候，如果遍历方式使用的是 `ltr` ，那么删除的时候不要使用 `ArrayList` 的 `remove` 方法，否则报出 `java.util.ConcurrentModificationException` 异常。
 
 #### ArrayList与Vector
@@ -489,7 +488,7 @@ public class Test {
 
 #### 数组和ArrayList的区别
 
-- 数组和ArrayList的本质区别在于前者是类型安全的,而后者是类型不安全的(ArrayList中插入不同类型的数据是允许).
+- 数组和 `ArrayList` 的本质区别在于前者是类型安全的，而后者是类型不安全的( `ArrayList` 中插入不同类型的数据是允许).
 - ArrayList为了兼容所有类型对象,使用了Object数组，在使用元素的时候会有装箱和拆箱的操作,降低了程序的性能.
 - ArrayList会动态扩充容量, 容量为原来的2倍.
 - ArrayList只有把元素添加进去之后才可以通过下标访问相应的元素.
