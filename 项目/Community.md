@@ -304,3 +304,33 @@ OAuth 2.0 列举了四种授权类型，分别用于不同的场景：
 
    - >设置主从数据库，主数据库负责写，从数据库负责读，可以极大程度的缓解X锁和S锁争用。
 
+## eblog相关
+
+### 1. ApplicationRunner与@Order注解
+
+> 在开发中可能会有这样的情景。需要在启动的时候执行一些操作，比如读取配置文件，数据库连接等。SpringBoot给我们提供了ApplicationRunner接口来帮助我们实现这种需求。该接口执行时机为项目启动完成的时候。
+
+```java
+@Component
+@Order(1)
+public class TestImplApplicationRunner implements ApplicationRunner {
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        System.out.println("这个是测试ApplicationRunner接口1");
+    }
+}
+```
+
+> 如果有多个类都实现了 ApplicationRunner，而需要他们按一定顺序执行的话，可以在实现类上加上@Order注解。@Order(value=整数值)。**SpringBoot会按照@Order中的value值从小到大依次执行。**
+
+```java
+@Component
+@Order(2)
+public class TestImplApplicationRunner2 implements ApplicationRunner {
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        System.out.println("这个是测试ApplicationRunner接口2");
+    }
+}
+```
+

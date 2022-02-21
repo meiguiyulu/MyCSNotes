@@ -6,7 +6,7 @@
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20180612094225630)
 
-- List , Set, Map都是接口，前两个继承至Collection接口，Map为独立接口;
+- List , Set, Map 都是接口，前两个继承至Collection接口，Map为独立接口;
 - Set下有HashSet，LinkedHashSet，TreeSet;
 - List下有ArrayList，Vector，LinkedList;
 - Map下有Hashtable，LinkedHashMap，HashMap，TreeMap;
@@ -18,48 +18,37 @@
   看图你会发现,LinkedList既可以实现Queue接口,也可以实现List接口。只不过呢, LinkedList实现了Queue接口。Queue接口窄化了对LinkedList的方法的访问权限(即在方法中的参数类型如果是Queue时，就完全只能访问Queue接口所定义的方法 了，而不能直接访问 LinkedList的非Queue的方法)，以使得只有恰当的方法才可以使用。
 - SortedSet是个接口，它里面的(只有TreeSet这一个实现可用)中的元素一定是有序的。
 
-**总结:**
-Collection接口:
+##### **总结:**
+
 **List 有序,可重复**
 
-![image-20210410093559755](image/image-20210410093559755.png)
-
->  **ArrayList**
->  优点: 底层数据结构是数组，查询快，增删慢。
->  缺点: 线程不安全，效率高
->
->  **Vector**
->优点: 底层数据结构是数组，查询快，增删慢。
->  缺点: 线程安全，效率低
->  
->  **LinkedList**
->
->  优点: 底层数据结构是链表，查询慢，增删快。
->缺点: 线程不安全，效率高
+>  - **ArrayList**
+>    - 优点: 底层数据结构是数组，查询快，增删慢。
+>    - 缺点: 线程不安全，效率高
+>- **Vector**
+>    - 优点: 底层数据结构是数组，查询快，增删慢。
+>  - 缺点: 线程安全，效率低
+>  - **LinkedList**
+>    - 优点: 底层数据结构是链表，查询慢，增删快。
+>    - 缺点: 线程不安全，效率高
 
 **Set 无序,唯一**
 
-![image-20210410093621570](image/image-20210410093621570.png)
-
-> **HashSet**
-> 底层数据结构是哈希表。(无序,唯一)
-> 如何来保证元素唯一性?
-> 1.依赖两个方法：hashCode()和equals()
-
-> **LinkedHashSet**
-> 底层数据结构是链表和哈希表。(FIFO插入有序,唯一)
-> 1.由链表保证元素有序
-> 2.由哈希表保证元素唯一
->
-> **TreeSet**
-> 底层数据结构是红黑树。(唯一，有序)
->
-> **如何保证元素排序的呢?**
-> 自然排序
-> 比较器排序
->
-> **如何保证元素唯一性的呢?**
-> 根据比较的返回值是否是0来决定
+> - **HashSet**
+>   - 底层数据结构是哈希表。(无序,唯一)
+>   - 如何来保证元素唯一性?
+>     - 依赖两个方法：hashCode()和equals()
+> - **LinkedHashSet**
+>   - 底层数据结构是链表和哈希表。(FIFO插入有序,唯一)
+>     - 由链表保证元素有序
+>     - 由哈希表保证元素唯一
+> - **TreeSet**
+>   - 底层数据结构是红黑树。(唯一，有序)
+>   - **如何保证元素排序的呢?**
+>     - 自然排序
+>     - 比较器排序
+>   - **如何保证元素唯一性的呢?**
+>     - 根据比较的返回值是否是0来决定
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20180612135157564)
 
@@ -93,7 +82,7 @@ TreeMap是有序的，HashMap和HashTable是无序的。==**HashMap散列图、H
 
 #### List、Set、Map线程不安全
 
-==java.util.ConcurrentModificationException 并发修改异常==
+==`java.util.ConcurrentModificationException` 并发修改异常==
 
 ##### List
 
@@ -166,9 +155,11 @@ public class TestList {
 
 ##### 分析
 
-**简单来说：**遍历的方式是用Itr去遍历的，这个Itr是ArrayList实现的一个遍历接口、内部类；但是我在删除的时候是通过ArrayList的remove方法去操作的，不是Itr内部的那个删除方法去操作的。ArrayList的remove方法修改的变量是继承自AbstractList的变量modeCount；而Itr的remove方法修改的是自身的变量expectedModCount。
+**简单来说：**
 
-所以，在用ArrayList的remove方法进行删除操作以后，Itr里面的expectedModCount会与ArrayList的modCount进行比较，二者不相等，所以会抛错。
+​		遍历的方式是用Itr去遍历的，这个Itr是ArrayList实现的一个遍历接口、内部类；但是我在删除的时候是通过ArrayList的remove方法去操作的，不是Itr内部的那个删除方法去操作的。ArrayList的remove方法修改的变量是继承自AbstractList的变量modeCount；而Itr的remove方法修改的是自身的变量expectedModCount。
+
+​		所以，在用ArrayList的remove方法进行删除操作以后，Itr里面的expectedModCount会与ArrayList的modCount进行比较，二者不相等，所以会抛错。
 
 **详细分析：**
 

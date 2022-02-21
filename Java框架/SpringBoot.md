@@ -331,12 +331,12 @@ public class Application {
   
   - ```java
     	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
-    		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
-    				getBeanClassLoader());
-    		Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
-    				+ "are using a custom packaging, make sure that file is correct.");
-    		return configurations;
-    	}
+      		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
+      				getBeanClassLoader());
+      		Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
+      				+ "are using a custom packaging, make sure that file is correct.");
+      		return configurations;
+      	}
     ```
 
 
@@ -497,7 +497,7 @@ https://blog.csdn.net/caoyuanyenang/article/details/110505166
 
 `WebMvcConfigurer` 配置类其实是`Spring`内部的一种配置方式，采用`JavaBean`的形式来代替传统的`xml`配置文件形式进行针对框架个性化定制，可以自定义一些Handler，Interceptor，ViewResolver，MessageConverter。基于java-based方式的spring mvc配置，需要创建一个**配置类并实现`WebMvcConfigurer`接口**；
 
-## 7.2、常用方法
+### 7.2、常用方法
 
 ```java
 public interface WebMvcConfigurer {
