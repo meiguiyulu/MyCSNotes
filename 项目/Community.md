@@ -37,24 +37,24 @@
 
 
 
+## 登录方式
 
+### 1. Github登录
 
-## Github登录
-
-### 登录流程
+#### 1.1 登录流程
 
 - 点击登录按钮后，会向 `Github` 发送 `get` 请求。这时会跳转到`GitHub`登入页面，授权后`GitHub`会返回一个携带 `code`的 `redirect-uri`。 `https://redirect_url?code=XXXXXX`
 - 系统处理`https://redirect_url?code=XXXXXX`请求，获取`code`值，向`https://github.com/login/oauth/access_token`发起 `post `请求，请求参数为`client_id`,`client_secret`和`code`。
 - `Github` 会返回一个 `access_token`。大概的样子：`access_token=d0686dc49a22d64e77402db072b719f510f22421&scope=user&token_type=bearer`。
 - 只需要向`https://api.github.com/user?access_token=xxx`发送`GET`请求，即可获取到登录用户的基本信息。
 
-#### OAuth协议
+#### 1.2 OAuth协议
 
 `OAuth`协议旨在为用户资源的授权访问提供一个安全，开放的标准。平台商通过`OAuth`协议，提示用户对第三方软件厂商(ISV)进行授权，使得第三方软件厂商能够使用平台商的部分数据，对外提供服务。
 
 它的最终目的是为第三方应用颁发一个有时效性的令牌 token。使得第三方应用能够通过该令牌获取相关的资源。
 
-#### 角色
+##### 角色
 
 首先需要介绍的是 OAuth 2.0 协议中的一些角色，整个授权协议的流程都将围绕着这些角色：
 
@@ -68,7 +68,7 @@
 
 假如我想要在 我的论坛上 用 `github.com` 的账号登录。那么 我的论坛相对于 `Github `就是一个客户端。而我们用什么操作的呢？浏览器，这就是一个用户代理。当从 `Github `的授权服务器获得 token 后，论坛系统 是需要请求 `Github `账号信息的，从哪请求？从 `Github `的资源服务器。
 
-### 协议流程
+#### 1.3 协议流程
 
 ![oauth2-roles](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/oauth2-roles.jpg)
 
@@ -99,7 +99,7 @@
      +--------+                               +---------------+
 ```
 
-#### 授权
+##### 授权
 
 一个客户端想要获得授权，就需要先到服务商那注册你的应用。一般需要你提供下面这些信息：
 
@@ -126,6 +126,254 @@ OAuth 2.0 列举了四种授权类型，分别用于不同的场景：
 下面来具体说说这四种授权。**注意重定向一定要用 `302`**。
 
 具体见[10 分钟理解什么是OAuth 2.0 协议](https://deepzz.com/post/what-is-oauth2-protocol.html)。
+
+
+
+### 2. Shiro登陆注册
+
+#### 2.1 登录逻辑
+
+关于登录模块，我们先来梳理一下逻辑，首先是把登录注册的页面复制进来，然后改成模板形式（头和尾，侧边栏等），再然后集成 shiro 框架，写登录注册接口，login -> realm(认证）-> 写登录注册逻辑 -> 页面的 shiro 标签 -> 分布式 session 的相关配置.
+
+`LoginController`
+
+```java
+    @GetMapping("/login")
+    public String login() {
+        return "/auth/login";
+    }
+
+    @ResponseBody
+    @PostMapping("/login")
+    public Result doLogin(String email, String password) {
+        if (StrUtil.isEmpty(email) || StrUtil.isBlank(password)) {
+            return Result.fail("邮箱或密码不能为空");
+        }
+
+        UsernamePasswordToken token = new UsernamePasswordToken(email, SecureUtil.md5(password));
+        try {
+            SecurityUtils.getSubject().login(token);
+        } catch (AuthenticationException e) {
+            if (e instanceof UnknownAccountException) {
+                return Result.fail("用户不存在");
+            } else if (e instanceof LockedAccountException) {
+                return Result.fail("用户被禁用");
+            } else if (e instanceof IncorrectCredentialsException) {
+                return Result.fail("密码错误");
+            } else {
+                return Result.fail("用户认证失败");
+            }
+        }
+
+        return Result.success().action("/");
+    }
+```
+
+上面的代码，首先分别写了一下 login 的 get 和 post 的方式，一个是跳转到 login，然后我们通过异步的 post 方式来提交 form 表单数据，login 的主要逻辑很简单，主要就一行代码：
+
+```java
+SecurityUtils.getSubject().login(token);
+
+根据我们对shiro的理解，login之后会最终委托给realm完成登录逻辑的认证，那么我们先来看看realm的内容（doGetAuthenticationInfo）
+    
+@Slf4j
+@Component
+public class AccountRealm extends AuthorizingRealm {
+    @Autowired
+    UserService userService;
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+        return null;
+    }
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        UsernamePasswordToken token = (UsernamePasswordToken)authenticationToken;
+        //注意token.getUsername()是指email！！
+        AccountProfile profile = userService.login(token.getUsername(), String.valueOf(token.getPassword()));
+        log.info("---------------->进入认证步骤");
+        SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(profile, token.getCredentials(), getName());
+        return info;
+    }
+}
+```
+
+`doGetAuthenticationInfo` 就是我们认证的方法，`authenticationToken` 就是我们的传过来的 `UsernamePasswordToken` ，包含着邮箱和密码。然后 `userService.login` 的内容就是校验一下账户的合法性，不合法就抛出对应的异常，合法最终就返回封装对象 `AccountProfile`。
+
+```java
+@Override
+public AccountProfile login(String username, String password) {
+    log.info("------------>进入用户登录判断，获取用户信息步骤");
+    User user = this.getOne(new QueryWrapper<User>().eq("email", username));
+    if(user == null) {
+        throw new UnknownAccountException("账户不存在");
+    }
+    if(!user.getPassword().equals(password)) {
+        throw new IncorrectCredentialsException("密码错误");
+    }
+    //更新最后登录时间
+    user.setLasted(new Date());
+    this.updateById(user);
+    AccountProfile profile = new AccountProfile();
+    BeanUtil.copyProperties(user, profile);
+    return profile;
+}
+```
+
+
+
+
+
+
+
+
+#### 2.2 注册
+
+注册过程设计到一个验证码校验的插件，这里我们使用 google 的验证码生成器 kaptcha。
+
+1. 引入依赖
+
+   ```xml
+           <!--图像验证码-->
+           <!-- https://mvnrepository.com/artifact/com.github.axet/kaptcha -->
+           <dependency>
+               <groupId>com.github.axet</groupId>
+               <artifactId>kaptcha</artifactId>
+               <version>0.0.9</version>
+           </dependency>
+   ```
+
+2. 然后配置一下验证码的图片生成规则：（边框、颜色、字体大小、长、高等）
+
+   ```java
+   /**
+    * 图形验证码配置类
+    * */
+   @Configuration
+   public class KaptchaConfig {
+       @Bean
+       public DefaultKaptcha producer () {
+           Properties propertis = new Properties();
+           propertis.put("kaptcha.border", "no");
+           propertis.put("kaptcha.image.height", "38");
+           propertis.put("kaptcha.image.width", "150");
+           propertis.put("kaptcha.textproducer.font.color", "black");
+           propertis.put("kaptcha.textproducer.font.size", "32");
+           Config config = new Config(propertis);
+           DefaultKaptcha defaultKaptcha = new DefaultKaptcha();
+           defaultKaptcha.setConfig(config);
+   
+           return defaultKaptcha;
+       }
+   }
+   ```
+
+3. 提供一个访问的接口用于生成验证码图片
+
+   ```java
+       private static final String KAPTCHA_SESSION_KEY = "KAPTCHA_SESSION_KEY";
+   
+       @Autowired
+       Producer producer;
+   
+       @GetMapping("/kapthca.jpg")
+       public void kaptcha(HttpServletResponse response) throws IOException {
+           /*验证码*/
+           String text = producer.createText();
+           BufferedImage image = producer.createImage(text);
+   
+           /*将验证码信息存储到Session中*/
+           request.getSession().setAttribute(KAPTCHA_SESSION_KEY, text);
+   
+           response.setHeader("Cache-Control",
+                   "no-store, no-cache");
+           response.setContentType("image/ipeg");
+           ServletOutputStream outputStream = response.getOutputStream();
+           ImageIO.write(image, "jpg", outputStream);
+       }
+   ```
+
+4. 所以访问这个接口就能得到验证码图片流，页面中：
+
+   ```html
+   <div class="">
+       <image id="kapthca" src="/kapthca.jpg"></image>
+   </div>
+   
+   ```
+
+5. 那么流是接通前端后端的，到后端还需要验证验证码的正确性，所以生成验证码的时候我们需要把验证码先存到 session 中，然后注册接口中再从 session 中获取出来然后比较是否正确。
+
+   ```java
+       @ResponseBody
+       @PostMapping("/register")
+       public Result doRegister(User user, String repass, String vercode) {
+   
+           /*检验用户名、密码、邮箱*/
+           ValidationUtil.ValidResult validResult = ValidationUtil.validateBean(user);
+           if (validResult.hasErrors()) {
+               return Result.fail(validResult.getErrors());
+           }
+   
+           /**
+            * 这里如果把密码加密应该更好一些
+            * */
+           if (!user.getPassword().equals(repass)) {
+               return Result.fail("两次输入密码不正确");
+           }
+   
+           /*图片验证码*/
+           String attribute = (String) request.getSession().getAttribute(KAPTCHA_SESSION_KEY);
+   
+           if (attribute == null || !attribute.equalsIgnoreCase(vercode)) {
+               return Result.fail("验证码输入不正确");
+           }
+   
+           /*注册功能*/
+           Result result = userService.register(user);
+           return result.action("/login");
+       }
+   ```
+
+6. 注册的逻辑
+
+   ```java
+       /*用户注册*/
+       @Override
+       public Result register(User user) {
+           long count = this.count(new QueryWrapper<User>()
+                   .eq("email", user.getEmail())
+                   .or()
+                   .eq("username", user.getUsername()));
+           if (count > 0) {
+               return Result.fail("邮箱或用户名已被占用");
+           }
+   
+   /*新建一个User对象而不直接传过来的user原因在于代码只判断了email、username、password三项;
+   * 不能确保F12修改代码传输其他的属性
+   * */
+           User temp = new User();
+           temp.setUsername(user.getUsername());
+           temp.setPassword(SecureUtil.md5(user.getPassword()));
+           temp.setEmail(user.getEmail());
+           temp.setAvatar("/res/images/avatar/default.png");
+   
+           temp.setCreated(new Date());
+           temp.setPoint(0);
+           temp.setVipLevel(0);
+           temp.setCommentCount(0);
+           temp.setPostCount(0);
+           temp.setGender("0");
+           this.save(temp);
+   
+           return Result.success();
+       }
+   ```
+
+
+
+
+
+
 
 ## 数据库设计 
 
@@ -303,34 +551,4 @@ OAuth 2.0 列举了四种授权类型，分别用于不同的场景：
 3. **数据库读写分离**
 
    - >设置主从数据库，主数据库负责写，从数据库负责读，可以极大程度的缓解X锁和S锁争用。
-
-## eblog相关
-
-### 1. ApplicationRunner与@Order注解
-
-> 在开发中可能会有这样的情景。需要在启动的时候执行一些操作，比如读取配置文件，数据库连接等。SpringBoot给我们提供了ApplicationRunner接口来帮助我们实现这种需求。该接口执行时机为项目启动完成的时候。
-
-```java
-@Component
-@Order(1)
-public class TestImplApplicationRunner implements ApplicationRunner {
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
-        System.out.println("这个是测试ApplicationRunner接口1");
-    }
-}
-```
-
-> 如果有多个类都实现了 ApplicationRunner，而需要他们按一定顺序执行的话，可以在实现类上加上@Order注解。@Order(value=整数值)。**SpringBoot会按照@Order中的value值从小到大依次执行。**
-
-```java
-@Component
-@Order(2)
-public class TestImplApplicationRunner2 implements ApplicationRunner {
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
-        System.out.println("这个是测试ApplicationRunner接口2");
-    }
-}
-```
 

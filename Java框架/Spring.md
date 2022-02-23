@@ -1,4 +1,4 @@
-### Spring
+Spring
 
 #### 什么是 Spring 框架?
 
@@ -1237,10 +1237,10 @@ web服务器在调用doFilter方法时，会传递一个`filterChain`对象进�
 
 - `FilterConfig`接口
   　　用户在配置filter时，可以使用`<init-param>`为filter配置一些初始化参数，当web容器实例化Filter对象，调用其init方法时，会把封装了filter初始化参数的filterConfig对象传递进来。因此开发人员在编写filter时，通过filterConfig对象的方法，就可获得：
-  　　String getFilterName()：得到filter的名称。
-  　　String getInitParameter(String name)： 返回在部署描述中指定名称的初始化参数的值。如果不存在返回null.
-  　　Enumeration getInitParameterNames()：返回过滤器的所有初始化参数的名字的枚举集合。
-  　　public ServletContext getServletContext()：返回Servlet上下文对象的引用。
+    　　String getFilterName()：得到filter的名称。
+    　　String getInitParameter(String name)： 返回在部署描述中指定名称的初始化参数的值。如果不存在返回null.
+    　　Enumeration getInitParameterNames()：返回过滤器的所有初始化参数的名字的枚举集合。
+    　　public ServletContext getServletContext()：返回Servlet上下文对象的引用。
 
 ###### 监听器(Listener)
 
@@ -1554,8 +1554,6 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 
 ![image-20210421141622135](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210421141622135.png)
 
-**********************
-
 
 
 #### 注解
@@ -1725,6 +1723,444 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
     ③如果指定了type，则从上下文中找到类似匹配的唯一bean进行装配，找不到或是找到多个，都会抛出异常。
 
     ④如果既没有指定name，又没有指定type，则自动按照byName方式进行装配；如果没有匹配，则回退为一个原始类型进行匹配，如果匹配则自动装配。
+
+##### @ControllerAdvice
+
+###### 介绍
+
+```	java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Component
+public @interface ControllerAdvice {
+
+	@AliasFor("basePackages")
+	String[] value() default {};
+
+	@AliasFor("value")
+	String[] basePackages() default {};
+
+	Class<?>[] basePackageClasses() default {};
+
+	Class<?>[] assignableTypes() default {};
+
+	Class<? extends Annotation>[] annotations() default {};
+}
+
+```
+
+> 首先，`ControllerAdvice`本质上是一个`Component`，因此也会被当成组建扫描，一视同仁。
+>
+> 然后，我们来看一下此类的注释：
+>
+> 这个类是为那些声明了（`@ExceptionHandle`、`@InitBinder` 或 `@ModelAttribute` 注解修饰的）方法的类而提供的专业化的 `@Component` , 以供多个 `Controller` 类所共享。
+>
+> 说白了，就是 AOP 思想的一种实现，你告诉我需要拦截规则，我帮你把他们拦下来，具体你想做更细致的拦截筛选和拦截之后的处理，你自己通过 `@ExceptionHandler` 、`@InitBinder` 或 `@ModelAttribute` 这三个注解以及被其注解的方法来自定义。
+>
+> 初定义拦截规则：
+>
+> `ControllerAdvice` 提供了多种指定 `Advice` 规则的定义方式，默认什么都不写，则是 `Advice` 所有`Controller` ，当然你也可以通过下列的方式指定规则：
+>
+> - 比如对于 `String[] value() default {}` , 写成 `@ControllerAdvice("org.my.pkg")` 或者 `@ControllerAdvice(basePackages="org.my.pkg")`, 则匹配 `org.my.pkg` 包及其子包下的所有`Controller`
+> - 用数组的形式指定，如：`@ControllerAdvice(basePackages={"org.my.pkg", "org.my.other.pkg"})` 
+> - 通过指定注解来匹配，比如我自定了一个 `@CustomAnnotation` 注解，我想匹配所有被这个注解修饰的 `Controller`, 可以这么写：`@ControllerAdvice（annotations={CustomAnnotation.class})`
+> - ......
+
+###### 用法
+
+- 与`@ExceptionHandler` 实现全局异常处理
+
+  - 对于使用了`@ExceptionHandler`注的方法，捕获 `Controller` 中抛出的不同类型的异常，从而达到异常全局处理的目的；
+
+  - 接收 `Throwable` 类作为参数，我们知道 `Throwable` 是所有异常的父类，所以说，可以自行指定所有异常。
+
+    - 比如在 **方法**上加`@ExceptionHandler(IllegalArgumentException.class)`，则表明此方法处理`IllegalArgumentException` 类型的异常，如果参数为空，将默认为方法参数列表中列出的任何异常（方法抛出什么异常都接得住）。
+
+    - 处理所有`IllegalArgumentException`异常，域中加入错误信息`errorMessage` 并返回错误页面`error`
+
+    - ```java
+      @ControllerAdvice
+      public class GlobalExceptionHandler {
+          @ExceptionHandler(IllegalArgumentException.class)
+          public ModelAndView handleException(IllegalArgumentException e){
+              ModelAndView modelAndView = new ModelAndView("error");
+              modelAndView.addObject("errorMessage", "参数不符合规范!");
+              return modelAndView;
+          }
+      }
+      ```
+
+- 与 `@ModelAttribute` 预设全局数据
+
+  - 先看一下 注解`ModelAttribute`的源码
+
+    - ```java
+      /**
+       * Annotation that binds a method parameter or method return value
+       * to a named model attribute, exposed to a web view. Supported
+       * for controller classes with {@link RequestMapping @RequestMapping}
+       * methods.
+       * 此注解用于绑定一个方法参数或者返回值到一个被命名的model属性中，暴露给web视图。支持在
+       * 在Controller类中注有@RequestMapping的方法使用（这里有点拗口，不过结合下面的使用介绍
+       * 你就会明白的)
+       */
+      @Target({ElementType.PARAMETER, ElementType.METHOD})
+      @Retention(RetentionPolicy.RUNTIME)
+      @Documented
+      public @interface ModelAttribute {
+      
+      	@AliasFor("name")
+      	String value() default "";
+      
+      	@AliasFor("value")
+      	String name() default "";
+      
+      	boolean binding() default true;
+      }
+      
+      ```
+
+  - 实际上这个注解的作用就是，允许你往 `Model` 中注入全局属性（可以供所有Controller中注有@Request Mapping的方法使用），`value` 和 `name` 用于指定 属性的 `key` ，`binding` 表示是否绑定，默认为 `true`。
+
+  - 全局参数绑定
+
+    - 方式一：
+
+      - ```java
+        @ControllerAdvice
+        public class MyGlobalHandler {
+            @ModelAttribute
+            public void presetParam(Model model){
+                model.addAttribute("globalAttr","this is a global attribute");
+            }
+        }
+        ```
+
+    - 方式二：
+
+      - ```java
+        @ControllerAdvice
+        public class MyGlobalHandler {
+        
+            @ModelAttribute()
+            public Map<String, String> presetParam(){
+                Map<String, String> map = new HashMap<String, String>();
+                map.put("key1", "value1");
+                map.put("key2", "value2");
+                map.put("key3", "value3");
+                return map;
+            }
+        }
+        ```
+
+  - 全局参数使用
+
+    - ```java
+      @RestController
+      public class AdviceController {
+      
+          @GetMapping("methodOne")
+          public String methodOne(Model model){ 
+              Map<String, Object> modelMap = model.asMap();
+              return (String)modelMap.get("globalAttr");
+          }
+      
+          @GetMapping("methodTwo")
+          public String methodTwo(@ModelAttribute("globalAttr") String globalAttr){
+              return globalAttr;
+          }
+      
+          @GetMapping("methodThree")
+          public String methodThree(ModelMap modelMap) {
+              return (String) modelMap.get("globalAttr");
+          }
+      }
+      ```
+
+      
+
+- 与 `@InitBinder` 预处理请求参数
+
+  - `@InitBinder` 的源码
+
+    - ```java
+      /**
+       * Annotation that identifies methods which initialize the
+       * {@link org.springframework.web.bind.WebDataBinder} which
+       * will be used for populating command and form object arguments
+       * of annotated handler methods.
+       * 粗略翻译：此注解用于标记那些 (初始化[用于组装命令和表单对象参数的]WebDataBinder)的方法。
+       * 原谅我的英语水平，翻译起来太拗口了，从句太多就用‘()、[]’分割一下便于阅读
+       *
+       * Init-binder methods must not have a return value; they are usually
+       * declared as {@code void}.
+       * 粗略翻译：初始化绑定的方法禁止有返回值，他们通常声明为 'void'
+       *
+       * <p>Typical arguments are {@link org.springframework.web.bind.WebDataBinder}
+       * in combination with {@link org.springframework.web.context.request.WebRequest}
+       * or {@link java.util.Locale}, allowing to register context-specific editors.
+       * 粗略翻译：典型的参数是`WebDataBinder`，结合`WebRequest`或`Locale`使用，允许注册特定于上下文的编辑 
+       * 器。
+       * 
+       * 总结如下：
+       *  1. @InitBinder 标识的方法的参数通常是 WebDataBinder。
+       *  2. @InitBinder 标识的方法,可以对 WebDataBinder 进行初始化。WebDataBinder 是 DataBinder 的一
+       * 		           个子类,用于完成由表单字段到 JavaBean 属性的绑定。
+       *  3. @InitBinder 标识的方法不能有返回值,必须声明为void。
+       */
+      @Target({ElementType.METHOD})
+      @Retention(RetentionPolicy.RUNTIME)
+      @Documented
+      public @interface InitBinder {
+      	/**
+      	 * The names of command/form attributes and/or request parameters
+      	 * that this init-binder method is supposed to apply to.
+      	 * <p>Default is to apply to all command/form attributes and all request parameters
+      	 * processed by the annotated handler class. Specifying model attribute names or
+      	 * request parameter names here restricts the init-binder method to those specific
+      	 * attributes/parameters, with different init-binder methods typically applying to
+      	 * different groups of attributes or parameters.
+      	 * 粗略翻译：此init-binder方法应该应用于的命令/表单属性和/或请求参数的名称。默认是应用于所有命	   		* 令/表单属性和所有由带注释的处理类处理的请求参数。这里指定模型属性名或请求参数名将init-binder		 * 方法限制为那些特定的属性/参数，不同的init-binder方法通常应用于不同的属性或参数组。
+      	 * 我至己都理解不太理解这说的是啥呀，我们还是看例子吧
+      	 */
+      	String[] value() default {};
+      }
+      
+      ```
+
+  - 用途：
+
+    - 参数处理
+
+      - ```java
+        /**
+        *可以实现全局的实现对 Controller 中RequestMapping标识的方法中的所有 String 和Date类型的参数都会被作相应的处理。
+        */
+        
+        @ControllerAdvice
+        public class MyGlobalHandler {
+        
+            @InitBinder
+            public void processParam(WebDataBinder dataBinder){
+        
+                /*
+                 * 创建一个字符串微调编辑器
+                 * 参数{boolean emptyAsNull}: 是否把空字符串("")视为 null
+                 */
+                StringTrimmerEditor trimmerEditor = new StringTrimmerEditor(true);
+        
+                /*
+                 * 注册自定义编辑器
+                 * 接受两个参数{Class<?> requiredType, PropertyEditor propertyEditor}
+                 * requiredType：所需处理的类型
+                 * propertyEditor：属性编辑器，StringTrimmerEditor就是 propertyEditor的一个子类
+                 */
+                dataBinder.registerCustomEditor(String.class, trimmerEditor);
+                
+                //同上，这里就不再一步一步讲解了
+                binder.registerCustomEditor(Date.class,
+                        new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"), false));
+            }
+        }
+        
+        ```
+
+      - 测试：
+
+      - ```java
+        @RestController
+        public class BinderTestController {
+        
+            @GetMapping("processParam")
+            public Map<String, Object> test(String str, Date date) throws Exception {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("str", str);
+                map.put("data", date);
+                return  map;
+            }
+        }
+        
+        ```
+
+      - ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20190923173648663.png)
+
+      - 可以看出，`str` 和 `date` 这两个参数在进入 `Controller` 的test的方法之前已经被处理了，`str` 被去掉了两边的空格(`%20` 在Http url 中是空格的意思)，`String`类型的 `1997-1-10`被转换成了`Date`类型。
+
+    - 参数绑定
+
+      - ```java
+        class Person {
+        
+            private String name;
+            private Integer age;
+            // omitted getters and setters.
+        }
+        
+        class Book {
+        
+            private String name;
+            private Double price;
+            // omitted getters and setters.
+        }
+        
+        @RestController
+        public class BinderTestController {
+        
+            @PostMapping("bindParam")
+            public void test(Person person, Book book) throws Exception {
+                System.out.println(person);
+                System.out.println(book);
+            }
+        }
+        ```
+
+      - `Person`类和 `Book` 类都有 `name`属性，那么这个时候就会出先问题，它可没有那么只能区分哪个`name`是哪个类的。因此 `@InitBinder`就派上用场了：
+
+      - ```java'
+        @ControllerAdvice
+        public class MyGlobalHandler {
+        
+        	/*
+             * @InitBinder("person") 对应找到@RequstMapping标识的方法参数中
+             * 找参数名为person的参数。
+             * 在进行参数绑定的时候，以‘p.’开头的都绑定到名为person的参数中。
+             */
+            @InitBinder("person")
+            public void BindPerson(WebDataBinder dataBinder){
+                dataBinder.setFieldDefaultPrefix("p.");
+            }
+        
+            @InitBinder("book")
+            public void BindBook(WebDataBinder dataBinder){
+                dataBinder.setFieldDefaultPrefix("b.");
+            }
+        }
+        
+        ```
+
+      - 因此，传入的同名信息就能对应绑定到相应的实体类中：`p.name -> Person.name b.name -> Book.name`。
+
+      - 如果 `@InitBinder("value")` 中的 `value` 值和 `Controller` 中 `@RequestMapping()` 标识的方法的参数名不匹配，则就会产生绑定失败的后果：如：`@InitBinder(“p”)、@InitBinder(“b”)     public void test(Person person, Book book)`。
+
+      - 解决方法：
+
+        - > 上述情况就会出现绑定失败，有两种解决办法
+          >
+          > 第一中：统一名称，要么全叫 `p`，要么全叫 `person` ，只要相同就行。
+          >
+          > 第二种：方法参数加 `@ModelAttribute`，有点类似 `@RequestParam`
+          >
+          > `@InitBinder(“p”)`、`@InitBinder(“b”)`
+          >
+          > `public void test(@ModelAttribute(“p”) Person person, @ModelAttribute(“b”) Book book)`
+
+##### @EnableAsync与@Async
+
+- `@Async`是 spring 为了方便开发人员进行异步调用的出现的，在方法上加入这个注解，spring 会从线程池中获取一个新的线程来执行方法，实现异步调用。
+- `@EnableAsync`表示开启对异步任务的支持，可以放在 springboot 的启动类上，也可以放在自定义线程池的配置类上。
+
+###### 使用方法
+
+1. 在 springboot 项目中，直接在启动类上加上 `@EnableAsync` ，然后在 service 层的方法上对于需要异步调用的方法加上 `@Async` 。
+
+   > #### 没有自定义线程池 `@Async` 默认的线程池是 `SimpleAsyncTaskExecutor`
+
+2. 自定义线程池使用
+
+   1. 新建一个线程池配置类，`@EnableAsync` 在配置类上加，不用在启动类上加也行，可以配置不同的线程池，用 `bean` 的 ` name` 做区分。
+
+      ```java
+      @Configuration
+      @EnableAsync
+      public class ThreadPoolTaskConfig {
+      	
+      	private static final int corePoolSize = 10;       		// 核心线程数（默认线程数）
+      	private static final int maxPoolSize = 100;			    // 最大线程数
+      	private static final int keepAliveTime = 10;			// 允许线程空闲时间（单位：默认为秒）
+      	private static final int queueCapacity = 200;			// 缓冲队列数
+      	private static final String threadNamePrefix = "Async-Service-"; // 线程池名前缀
+      	
+      	@Bean("taskExecutor") // bean的名称，默认为首字母小写的方法名
+      	public ThreadPoolTaskExecutor getAsyncExecutor(){
+      		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+      		executor.setCorePoolSize(corePoolSize);   
+      		executor.setMaxPoolSize(maxPoolSize);
+      		executor.setQueueCapacity(queueCapacity);
+      		executor.setKeepAliveSeconds(keepAliveTime);
+      		executor.setThreadNamePrefix(threadNamePrefix);
+      		
+      		// 线程池对拒绝任务的处理策略
+      		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+      		// 初始化
+      		executor.initialize();
+      		return executor;
+      	}
+      }
+      
+      ```
+
+   2. `@Async` 的使用一样是在 service 层的方法上加，如果配置了多个线程池，可以用 `@Async("name")`，那么表示线程池的 `@Bean` 的 name，来指定用哪个线程池处理。
+
+      1. 假如只配置了一个线程池，直接用 `@Async` 就会用自定义的线程池执行
+
+      2. 假如配置了多个线程池，用 `@Async` 没指定用哪个线程池，会用默认的 `SimpleAsyncTaskExecutor`来处理。
+
+      3. ```java
+         @Service
+         public class testAsyncService {
+         	Logger log = LoggerFactory.getLogger(testAsyncService.class);
+          
+         	// 发送提醒短信 1
+         	@Async("taskExecutor")
+         	public void service1() throws InterruptedException {
+         		log.info("--------start-service1------------");
+         		Thread.sleep(5000); // 模拟耗时
+         	    log.info("--------end-service1------------");
+         	}
+         	
+         	// 发送提醒短信 2
+         	@Async("taskExecutor")
+         	public void service2() throws InterruptedException {
+         		
+         		log.info("--------start-service2------------");
+         		Thread.sleep(2000); // 模拟耗时
+         	    log.info("--------end-service2------------");
+          
+         	}
+         
+         ```
+
+###### 失效原因
+
+`@Async` 失效原因如下：
+一、异步方法使用static修饰
+二、异步类没有使用@Component注解（或其他注解）导致spring无法扫描到异步类
+三、异步方法不能与异步方法在同一个类中
+四、类中需要使用@Autowired或@Resource等注解自动注入，不能自己手动new对象
+六、在Async 方法上标注@Transactional是没用的。 在Async 方法调用的方法上标注@Transactional 有效。
+七、调用被@Async标记的方法的调用者不能和被调用的方法在同一类中不然不会起作用！！！！！！！
+八、使用@Async时要求是不能有返回值的不然会报错的 因为异步要求是不关心结果的
+
+> 被 `@Async` 注解修饰的方法，返回值只能是 void 或者 Future。
+
+###### 源码分析
+
+```java
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Async {
+	String value() default "";
+}
+```
+
+- 被 `@Async` 注解修饰的方法，返回值只能是 void 或者 Future。
+- 核心线程数配置是 8 ，队列长度应该是 `Integer.MAX_VALUE`。
+
+
+
+**************
 
 
 #### Spring、SpringMVC、Spring Boot的区别

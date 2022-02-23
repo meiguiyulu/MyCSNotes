@@ -415,7 +415,8 @@ apache shiro的话，简单，易用，功能也强大，spring官网就是用�
   - `@Resource` 默认按照名称方式进行bean匹配
   - `@Autowired` 默认按照类型方式进行bean匹配。
   
-- `@Repository`：``@Repository`注解类作为DAO对象，管理操作数据库的对象。
+- `@Repository`：`@Repository`注解类作为DAO对象，管理操作数据库的对象。
+  
   - `@Component`, `@Service`, `@Controller`, `@Repository`是spring注解，注解后可以被spring框架所扫描并注入到spring容器来进行管理。
   - `@Component`是通用注解，其他三个注解是这个注解的拓展，并且具有了特定的功能。
   

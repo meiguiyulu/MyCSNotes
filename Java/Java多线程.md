@@ -89,7 +89,7 @@ main线程执行main方法。
 
 #### ==Java创建线程的方式==
 
-1. 通过继承Thread类创建线程类；
+1. 通过继承 `Thread` 类创建线程类；
 
    > **1、定义一个类继承Thread类，并重写Thread类的run()方法，run()方法的方法体就是线程要完成的任务，因此把run()称为线程的执行体；**
    >
@@ -99,9 +99,9 @@ main线程执行main方法。
    >
    > ![image-20210426201829497](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210426201829497.png)
 
-2. 通过实现Runnable接口创建线程类；
+2. 通过实现 `Runnable` 接口创建线程类；
 
-   > **1、定义一个类实现Runnable接口；**
+   > **1、定义一个类实现 Runnable 接口；**
    >
    > **2、创建该类的实例对象obj；**
    >
@@ -129,7 +129,7 @@ main线程执行main方法。
 >
 > 优点：
 >
-> 1、实现起来简单，而且要获取当前线程，无需调用`Thread.currentThread()`方法，直接使用this即可获取当前线程；
+> 1、实现起来简单，而且要获取当前线程，无需调用`Thread.currentThread()`方法，直接使用 this 即可获取当前线程；
 >
 > 缺点：
 >
@@ -143,7 +143,7 @@ main线程执行main方法。
 >
 > 1、线程类只是实现了接口，还可以继承其他类；
 >
-> 2、多个线程可以使用同一个target对象，适合多个线程处理同一份资源的情况。(**避免单继承的局限性，方便同一对象被多个线程使用**)
+> 2、多个线程可以使用同一个 target 对象，适合多个线程处理同一份资源的情况。(**避免单继承的局限性，方便同一对象被多个线程使用**)
 >
 > 缺点：
 >
@@ -223,37 +223,43 @@ main线程执行main方法。
 
 ![image-20210807202425454](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210807202425454.png)
 
-​	由上图可以看出：线程创建之后它将处于**NEW(新建)**状态，调用`start()`方法后开始运行，线程这时候处于**READY(就绪)**状态。可运行状态的线程获得了CPU时间片( timeslice)后就处于**RUNNING(运行)**状态。
+​	由上图可以看出：线程创建之后它将处于**NEW(新建)**状态，调用`start()`方法后开始运行，线程这时候处于**Runnable(就绪)**状态，但是此时线程并不会运行。当获得了CPU时间片(timeslice)后线程才会进行**RUNNING(运行)**状态。
 
-> 操作系统隐藏Java虚拟机(JVM)中的 RUNNABLE和RUNNING状态，它只能看到RUNNABLE 状态，所以Java系统一般将这两个状态统称为**RUNNABLE(运行中)**状态。
+> 值得注意的是：`Runnable` 状态的线程无法直接进入 `Blocked` 状态和 `Terminated` 状态的。只有处在`Running` 状态的线程，换句话说，只有获得 CPU调度执行权的线程才有资格进入 `Blocked` 状态和`Terminated` 状态，`Runnable` 状态的线程要么能被转换成 `Running` 状态，要么被意外终止。
 
 ![image-20210410110311763](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410110311763.png)
 
-当线程执行`wait()`方法之后，线程进入**WAITING(等待)**状态。进入等待状态的线程需要依靠其他线程的通知才能够返回到运行状态，而**TIME_WAITING(超时等待)**状态相当于在等待状态的基础上增加了超时限制，比如通过`sleep(long millis)`方法或`wait(long millis)`方法可以将Java 线程置于**TIMED WAITING**状态。当超时时间到达后Java线程将会返回到**RUNNABLE**状态。当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到**BLOCKED(阻塞)**状态。线程在执行 Runnable的`run()`方法之后将会进入到**TERMINATED(终止**)状态。
+当线程执行`wait()`方法之后，线程进入**WAITING(等待)**状态。进入等待状态的线程需要依靠其他线程的通知才能够返回到运行状态，而**TIME_WAITING(超时等待)**状态相当于在等待状态的基础上增加了超时限制，比如通过`sleep(long millis)`方法或`wait(long millis)`方法可以将Java 线程置于**TIMED WAITING**状态。当超时时间到达后Java线程将会返回到**RUNNABLE**状态。当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到**BLOCKED(阻塞)**状态。线程在执行 `Runnable` 的`run()`方法之后将会进入到**TERMINATED(终止**)状态。
+
+##### 线程进入终止(死亡)状态
+
+- 自然终止：正常运行 `run()`方法后终止
+- 异常终止：调用 `stop()` 方法让一个线程终止运行
+- JVM 异常结束，所有的线程生命周期均被结束。
 
 ##### 线程进入BLOCKED(阻塞)状态
 
 - 运行的线程执行 `wait()` 方法，该线程会释放占有的所有资源。JVM会把该线程放入“等待池”中。进入这个状态后，是不能自动唤醒的，必须依靠其他线程调用 `notify()` 或 `notifyAll()` 方法才能被唤醒。
 - 当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到**BLOCKED(阻塞)**状态。
-- 运行的线程执行 `sleep()` 或 `join()` 方法，或者发出了I/O请求时，JVM会把该线程置为阻塞状态。当`sleep()  `状态超时、`join()` 等待线程终止或者超时、或者I/O处理完毕时，线程重新转入就绪状态。
+- 运行的线程执行 `sleep()` 或 `join()` 方法，或者发出了I/O请求时，JVM会把该线程置为阻塞状态。当`sleep()  `状态超时、`join()` 等待线程终止或者超时、或者I/O处理完毕时，线程重新转入**就绪**状态。
 
-##### wait()和block()区别
+##### wait()和blocked()区别
 
 **阻塞BLOCKED**
 
-阻塞表示线程在等待对象的monitor锁，试图通过synchronized去获取某个锁，但是此时其他线程已经独占了monitor锁，那么当前线程就会进入等待状态。
+阻塞表示线程在等待对象的 monitor 锁，试图通过 synchronized 去获取某个锁，但是此时其他线程已经独占了monitor锁，那么当前线程就会进入等待状态。
 
 **等待WAITING**
 
 当前线程等待其他线程执行某些操作，典型场景就是生产者消费者模式，在任务条件不满足时，等待其他线程的操作从而使得条件满足。可以通过 `wait()` 方法或者 `Thread.join()` 方法都会使线程进入等待状态。
 
-==实际上不用特意区分两者, 因为两者都会暂停线程的执行. 两者的区别是: 进入waiting状态是线程主动的, 而进入blocked状态是被动的. 更进一步的说, 进入blocked状态是在同步(synchronized代码之外), 而进入waiting状态是在同步代码之内.==
+> 实际上不用特意区分两者, 因为两者都会暂停线程的执行. 两者的区别是：
+>
+>  进入 `waiting` 状态是线程主动的, 而进入 `blocked` 状态是被动的. 更进一步的说, 进入 `blocked` 状态是在同步( `synchronized` 代码之外), 而进入 `waiting` 状态是在同步代码之内。
 
 #### 一个线程两次调用start()方法会出现什么情况？
 
-Java的线程是**不允许启动两次**的，第二次调用必然会抛出`ava.lang.IllegalThreadStateException`，这是一种运行时异常，多次调用`start()`被认为是编程错误。run() 方法没有限制。
-
-在第二次调用start()方法的时候，线程可能处于终止或者其他(非NEW)状态，但是不论如何，都是不可以再次启动的。
+Java的线程是**不允许启动两次**的，第二次调用必然会抛出`java.lang.IllegalThreadStateException`，这是一种运行时异常，多次调用`start()`被认为是编程错误。`run()` 方法没有限制。
 
 #### ==说说sleep()方法和wait()方法的区别和共同点==
 
@@ -1369,17 +1375,19 @@ Volatile是Java中的一个关键字，是Java虚拟机提供的**轻量级的�
 > >    - ```markdown
 > >     **
 > >      1. 现代处理器为了提高处理速度，在处理器和内存之间增加了多级缓存，处理器不会直接去和内存通信，将数据读到内部缓存中再进行操作。由于引入了多级缓存，就存在缓存数据不一致问题。
+> >      ```
 > >     2. 缓存一致性协议: 每个处理器通过嗅探在总线上传播的数据来检查自己缓存的值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器要对这个数据进行修改操作的时候，会强制重新从系统内存里把数据读到处理器缓存里。
 > >        **
 > >      ```
-> > 
+> >    
 > >    - 如果一个变量被 **`volatile`** 所修饰的话，在每次数据变化之后，其值都会被强制刷入主存。而其他处理器的缓存由于遵守了**缓存一致性协议**，也会把这个变量的值从主存加载到自己的缓存中。这就保证了一个 **`volatile`** 在并发编程中，其值在多个缓存中是可见的。
-> > 
+> >      ```
+> >
 > > 2. **`happen-before`**
 > >
 > >    - 对 **`volatile`** 域的**写入操作** **`happends-before`** 于每一个后续对同一域的**读操作**。
 > >     当我们去写一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存中的共享变量值刷新到主内存中，读一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存置为无效，接下来线程从主内存中读取共享变量。两个线程，线程A写一个 **`volatile`** 变量，线程B随后读这个 **`volatile`** 变量。这个过程实际上就是线程A和线程B通过**主内存**进行通信(线程间通信)。
-> > 
+> >
 > >   - ```markdown
 > >      # happen-before法则
 > >      1. 程序次序法则：按照代码顺序执行
@@ -1391,7 +1399,7 @@ Volatile是Java中的一个关键字，是Java虚拟机提供的**轻量级的�
 > >      6. 终结法则：一个对象的构造函数的结束happends-before于这个对象finalizer的开始。
 > >      7. 传递性：如果A happens-before于B, 且B happends-before 于C, 则A happens-before 于C
 > >     ```
-> > 
+> >
 > > 
 
 ##### ==不保证原子性==
@@ -1893,8 +1901,6 @@ private void set(ThreadLocal<?> key, Object value) {
 }
 ```
 
-
-
 *********************
 
 #### ==线程池==
@@ -1912,7 +1918,7 @@ private void set(ThreadLocal<?> key, Object value) {
 ###### 使用线程池的好处
 
 - **降低资源消耗**。通过重复利用已创建的线程降低线程创建和销毁造成的消耗。
-- **提高响应速度**。当任务到达时，任务可以不需要的等到线程创建就能立即执行。
+- **提高响应速度**。当任务到达时，任务可以不需要等到线程创建就能立即执行。
 - **提高线程的可管理性。**线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/thread-pool.png)
@@ -1974,7 +1980,12 @@ Executors.ScheduledThreadPoolExecutor(); //创建一个定长线程池,支持定
 
 2. `maximumPoolSize `线程池最大线程数量。  	
 
-   > 一个任务被提交到线程池以后，首先会找有没有空闲存活线程，如果有则直接将任务交给这个空闲线程来执行，如果没有则会缓存到工作队列(后面会介绍)中，如果工作队列满了，才会创建一个新线程，然后从工作队列的头部取出一个任务交由新线程来处理，而将刚提交的任务放入工作队列尾部。线程池不会无限制的去创建新线程，它会有一个最大线程数量的限制，这个数量即由`maximunPoolSize`指定。
+   > 一个任务被提交到线程池以后，首先会找有没有空闲存活线程，
+   >
+   > - 如果有则直接将任务交给这个空闲线程来执行；
+   > - 如果没有则会缓存到工作队列(后面会介绍)中。
+   >   - 如果工作队列满了，才会创建一个新线程，然后从工作队列的头部取出一个任务交由新线程来处理，而将刚提交的任务放入工作队列尾部。
+   >   - 线程池不会无限制的去创建新线程，它会有一个最大线程数量的限制，这个数量即由`maximumPoolSize`指定。
    >
    > ==任务提交时，判断的顺序为 `corePoolSize` –> `workQueue` –> `maximumPoolSize`。==
 
@@ -1988,74 +1999,67 @@ Executors.ScheduledThreadPoolExecutor(); //创建一个定长线程池,支持定
 
 5. `workQueue `工作队列
 
-   > 新任务被提交后，会先进入到此工作队列中，任务调度时再从队列中取出任务。jdk中提供了四种工作队列：
-   >
-   > ①`ArrayBlockingQueue`
-   >
-   > 基于数组的有界阻塞队列，按FIFO排序。新任务进来后，会放到该队列的队尾，有界的数组可以防止资源耗尽问题。当线程池中线程数量达到`corePoolSize`后，再有新任务进来，则会将任务放入该队列的队尾，等待被调度。如果队列已经是满的，则创建一个新线程，如果线程数量已经达到`maxPoolSize`，则会执行拒绝策略。
-   >
-   > ②`LinkedBlockingQuene`
-   >
-   > 基于链表的无界阻塞队列(其实最大容量为`Interger.MAX`)，按照FIFO排序。由于该队列的近似无界性，当线程池中线程数量达到`corePoolSize`后，再有新任务进来，会一直存入该队列，而不会去创建新线程直到`maxPoolSize`，因此使用该工作队列时，参数`maxPoolSize`其实是不起作用的。
-   >
-   > ③`SynchronousQuene`
-   >
-   > 一个不缓存任务的阻塞队列，生产者放入一个任务必须等到消费者取出这个任务。也就是说新任务进来时，不会缓存，而是直接被调度执行该任务，如果没有可用线程，则创建新线程，如果线程数量达到`maxPoolSize`，则执行拒绝策略。
-   >
-   > ④`PriorityBlockingQueue`
-   >
-   > 具有优先级的无界阻塞队列，优先级通过参数`Comparator`实现。
+> 新任务被提交后，会先进入到此工作队列中，任务调度时再从队列中取出任务。jdk中提供了四种工作队列：
+>
+> - `ArrayBlockingQueue`
+>   - 基于数组的有界阻塞队列，按FIFO排序。新任务进来后，会放到该队列的队尾，有界的数组可以防止资源耗尽问题。当线程池中线程数量达到`corePoolSize`后，再有新任务进来，则会将任务放入该队列的队尾，等待被调度。如果队列已经是满的，则创建一个新线程，如果线程数量已经达到`maxPoolSize`，则会执行拒绝策略。
+> - ``LinkedBlockingQuene`
+>   - 基于链表的无界阻塞队列(其实最大容量为`Interger.MAX_VALUE`)，按照FIFO排序。由于该队列的近似无界性，当线程池中线程数量达到`corePoolSize`后，再有新任务进来，会一直存入该队列，而不会去创建新线程直到`maxPoolSize`，因此使用该工作队列时，参数`maxPoolSize`其实是不起作用的。
+> - `SynchronousQuene`
+>   - 一个不缓存任务的阻塞队列，生产者放入一个任务必须等到消费者取出这个任务。也就是说新任务进来时，不会缓存，而是直接被调度执行该任务，如果没有可用线程，则创建新线程，如果线程数量达到`maxPoolSize`，则执行拒绝策略。
+> - `PriorityBlockingQueue`
+>   - 具有优先级的无界阻塞队列，优先级通过参数`Comparator`实现。
 
 6. `threadFactory `线程工厂
 
-   > 每当线程池创建一个新的线程时，都是通过线程工厂方法来完成的。在 ThreadFactory 中只定义了一个方法 newThread，每当线程池需要创建新线程就会调用它。
-   >
-   > ```java
-   > public class MyThreadFactory implements ThreadFactory {
-   >     private final String poolName;
-   > 
-   >     public MyThreadFactory(String poolName) {
-   >         this.poolName = poolName;
-   >     }
-   > 
-   >     public Thread newThread(Runnable runnable) {
-   >         return new MyAppThread(runnable, poolName);//将线程池名字传递给构造函数，用于区分不同线程池的线程
-   >     }
-   > }
-   > ```
+> 每当线程池创建一个新的线程时，都是通过线程工厂方法来完成的。在 ThreadFactory 中只定义了一个方法 newThread，每当线程池需要创建新线程就会调用它。
+>
+> ```java
+> public class MyThreadFactory implements ThreadFactory {
+>     private final String poolName;
+> 
+>     public MyThreadFactory(String poolName) {
+>         this.poolName = poolName;
+>     }
+> 
+>     public Thread newThread(Runnable runnable) {
+>         return new MyAppThread(runnable, poolName);//将线程池名字传递给构造函数，用于区分不同线程池的线程
+>     }
+> }
+> ```
 
 7. `RejectedExecutionHandler` 拒绝策略
 
-   > 当工作队列中的任务已到达最大限制，并且线程池中的线程数量也达到最大限制，这时如果有新任务提交进来，该如何处理呢。这里的拒绝策略，就是解决这个问题的，jdk中提供了4种拒绝策略:
-   >
-   > ①`CallerRunsPolicy`
-   >
-   > 该策略下，在调用者线程中直接执行被拒绝任务的run方法，除非线程池已经shutdown，则直接抛弃任务。
-   >
-   > ②`AbortPolicy`
-   >
-   > **该策略下，直接丢弃任务，并抛出`RejectedExecutionException`异常。默认。**
-   >
-   > ③`DiscardPolicy`
-   >
-   > 该策略下，直接丢弃任务，什么都不做。
-   >
-   > ④`DiscardOldestPolicy`
-   >
-   > 该策略下，抛弃进入队列最早的那个任务，然后尝试把这次拒绝的任务放入队列。
-   >
-   > ```java
-   > /** 
-   >  * new ThreadPoolExecutor.AbortPolicy()
-   >  *      线程数量超过最大承载量(阻塞队列的capacity + maximumPoolSize)以后，抛出异常
-   >  * new ThreadPoolExecutor.CallerRunsPolicy()
-   >  *      线程数量超过最大承载量(阻塞队列的capacity + maximumPoolSize)以后，由调用者所在的线程来执行任务
-   >  * new ThreadPoolExecutor.DiscardPolicy()
-   >  *      队列满了就丢掉任务，不抛出异常
-   >  * new ThreadPoolExecutor.DiscardOldestPolicy()
-   >  *      队列满了，尝试去和最早的竞争，不会抛出异常
-   >  */
-   > ```
+> 当工作队列中的任务已到达最大限制，并且线程池中的线程数量也达到最大限制，这时如果有新任务提交进来，该如何处理呢。这里的拒绝策略，就是解决这个问题的，jdk中提供了4种拒绝策略:
+>
+> ①`CallerRunsPolicy`
+>
+> 该策略下，在调用者线程中直接执行被拒绝任务的run方法，除非线程池已经shutdown，则直接抛弃任务。
+>
+> ②`AbortPolicy`
+>
+> **该策略下，直接丢弃任务，并抛出`RejectedExecutionException`异常。默认。**
+>
+> ③`DiscardPolicy`
+>
+> 该策略下，直接丢弃任务，什么都不做。
+>
+> ④`DiscardOldestPolicy`
+>
+> 该策略下，抛弃进入队列最早的那个任务，然后尝试把这次拒绝的任务放入队列。
+>
+> ```java
+> /** 
+>  * new ThreadPoolExecutor.AbortPolicy()
+>  *      线程数量超过最大承载量(阻塞队列的capacity + maximumPoolSize)以后，抛出异常
+>  * new ThreadPoolExecutor.CallerRunsPolicy()
+>  *      线程数量超过最大承载量(阻塞队列的capacity + maximumPoolSize)以后，由调用者所在的线程来执行任务
+>  * new ThreadPoolExecutor.DiscardPolicy()
+>  *      队列满了就丢掉任务，不抛出异常
+>  * new ThreadPoolExecutor.DiscardOldestPolicy()
+>  *      队列满了，尝试去和最早的竞争，不会抛出异常
+>  */
+> ```
 
 ##### 线程池生命周期
 
@@ -2074,7 +2078,7 @@ Executors.ScheduledThreadPoolExecutor(); //创建一个定长线程池,支持定
 - `SHUTDOWN:` 不接收新的任务，但是处理队列中的任务
 - `STOP: `不接收新的任务，不处理队列中的任务，同时中断处理中的任务
 - `TIDYING: `所有的任务处理完成，有效的线程数是0
-- `TERMINATED:  `terminated()方法执行完毕
+- `TERMINATED:  ` terminated()方法执行完毕
 
 ##### 线程池状态如何改变
 
