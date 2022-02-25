@@ -1,0 +1,43 @@
+云e办 
+前端 Node(14.X)+Vue
+  Node 安装 设置淘宝镜像
+  项目目录不要出现中文
+  运行:
+	 1.dos-->进入项目跟目录-->cmd-->npm run serve
+	 2.webstorm 打开项目-->terminal-->npm run serve
+	  出现问题
+		 1.node 版本
+			 高版本（16.x）-->14.x
+			 低版本(12.X)-->14.X
+		 2.node 安装
+			 不需要设置环境变量	 
+后端: Maven + SpringBoot（SSM） + MySql
+  问题:
+    1.Maven 环境(Idea 下配置)
+	    Maven根目录
+		Maven Settings 文件
+		Maven 本地仓库路径
+	2.项目编译环境(1.8)
+       Jdk Path 
+          JAVA_HOME=C:\Program Files\Java\jdk1.8.0_131
+       Idea 下编译版本
+           1.配置编译插件
+			  <plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.7.0</version>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+			</plugins>
+			2.手动调整编译版本
+			   settings-->java compiler
+			   project-structure-->module-->
+			      sources-language level-->8
+				  dependency-->sdk-->1.8
+       
+  	  	 
