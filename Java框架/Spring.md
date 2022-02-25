@@ -69,7 +69,7 @@ SpringMVC、SpringBoot、Spring Cloud、Spring Cloud Dataflow等。有人亲切�
 3. 单例 `Bean` 创建完了之后，`Spring` 会发布⼀个容器启动事件。
 4. `Spring` 启动结束。
 5. 在源码中会更复杂，⽐如源码中会提供⼀些模板⽅法，让⼦类来实现，⽐如源码中还涉及到⼀些`BeanFactoryPostProcessor` 和 `BeanPostProcessor` 的注册，`Spring` 的扫描就是通过 `BenaFactoryPostProcessor` 来实现的，依赖注⼊就是通过 `BeanPostProcessor` 来实现的。
-6. 在Spring启动过程中还会去处理 `@Import` 等注解。 
+6. 在 `Spring` 启动过程中还会去处理 `@Import` 等注解。 
 
 #### Spring IOC 
 
