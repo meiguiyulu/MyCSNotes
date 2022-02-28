@@ -12,6 +12,7 @@
 	   1.3.1 每次通过UUID.randomUUID().toString()来生成一个唯一的字符串; 通过response.addCookie(new Cookie("token", token)) 存到cookie中。
 	   1.3.2 拦截器: 通过session来拦截。首先从cookie中判断token是否存在, 根据token的值从数据库中查找user, 如果能查到, 将user的信息存到session中: request.getSession().setAttribute("user", user)。
 	   1.3.3 保持登录状态: 判断session.user是否是空。
+     1.4 进阶功能: 将登陆信息存储到Redis缓存中
 2. http://localhost:8080/callback/{type} ----> AuthorizeController
     2.1 根据type的值来判断登录的方式: Github; Gitee。
     2.2 根据不同的登陆方式调用OAuth协议来获得登录用户的信息：name, id, bio, avatar_url等。
@@ -21,13 +22,14 @@
 3. 热门标签功能
 	3.1 使用@Scheduled(fixedRate = 1000 * 60 * 60 * 3)设置3小时运行一次。
 	3.2 热门标签的判断方法: 热度判断方式很简单, 线性判断方式----> 热度值+5+评论数
-	3.3 热门标签排序使用的是优先队列, 容量为5.
+	3.3 热门标签排序使用的是优先队列(Redis用的是zset), 容量为5.
 4. 分页功能：
 	4.1 MySQL select xxx limit offset, size
 	4.2 offset = size * (page - 1);
 5. 相关问题
 	5.1 根据标签来查询  两个问题的标签相同, 可视为相关问题
 	5.2 select * from question where id != #{id} and tag regexp #{tag}用到了正则表达式
+	5.3 对查询功能进行了改进: 使用elasticSearch
 6. 准备实现功能:
 	6.1 日志功能: AOP实现
 	   6.1.1 定义一个切面, 也就是要实现的额外功能, 可以使用@Aspect注解

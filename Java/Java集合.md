@@ -495,11 +495,15 @@ public class Test {
 4. **初始容量大小和每次扩充容量大小的不同**：①创建时如果不指定容量初始值，**Hashtable默认的初始大小为11，之后每次扩充，容量变为原来的2n+1。HashMap默认的初始化大小为16。之后每次扩充，容量变为原来的2倍**。②创建时如果给定了容量初始值，那么Hashtable会直接使用你给定的大小，而HashMap会将其扩充为2的幂次方大小(HashMap中的`tableSizeFor()`方法保证，下面给出了源代码)。也就是说**HashMap总是使用2的幂作为哈希表的大小**，后面会介绍到为什么是2的幂次方。
 5. **底层数据结构：**JDK1.8以后的HashMap在解决哈希冲突时有了较大的变化，**当链表长度大于阈值(默认为8)(将链表转换成红黑树前会判断，如果当前数组的长度小于64，那么会选择先进行数组扩容，而不是转换为红黑树)时，将链表转化为红黑树，以减少搜索时间。Hashtable 没有这样的机制，底层实现是数组+链表。**
 
+************
+
 #### HashMap和HashSet
 
 ​	`HashSet`底层是基于`HashMap`实现的(Hashset的源码非常非常少，因为除了`clone()`、`writeObject()`、`readObject()`是 `HashSet` 自己不得不实现之外，其他方法都是直接调用 `HashMap` 中的方法。
 
 ![image-20210409211817982](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210409211817982.png)
+
+*****************
 
 #### HashSet
 
@@ -1069,7 +1073,7 @@ static final int hash(Object key) {
 
 **hash函数**
 
-> ==key的`hashcode`值的高16位与低16位异或==
+> ==key的 `hashcode`值的高16位与低16位异或==
 >
 > ```java
 > static final int hash(Object key) {
@@ -1147,7 +1151,7 @@ static final int hash(Object key) {
 > }
 > ```
 
-HashMap在put方法中，它使用hashCode()和equals()方法。当我们通过调用put方法传递<key-value>对的时候，HashMap使用Key hashCode()和哈希算法来找出存储<key-value>对的索引。如果索引处为空，则直接插入到对应的数组中，否则，判断是否是红黑树，若是，则红黑树插入，否则遍历链表，若长度不小于8，则将链表转为红黑树，转成功之后 再插入。
+`HashMap` 在 `put` 方法中，它使用 `hashCode()` 和 `equals()` 方法。当我们通过调用 `put` 方法传递 `<key-value>` 对的时候，`HashMap` 使用 `Key hashCode()` 和哈希算法来找出存储 `<key-value>` 对的索引。如果索引处为空，则直接插入到对应的数组中，否则，判断是否是红黑树，若是，则红黑树插入，否则遍历链表，若长度不小于 `8` ，则将链表转为红黑树，转成功之后 再插入。
 
 ##### 9、HashMap Get
 
@@ -1284,11 +1288,11 @@ final Node<K,V> getNode(int hash, Object key) {
 
 ##### 10、Object能作为Hashmap的key吗？
 
-可以。但是 `Hashmap` 不允许有重复的key，所以要重写它的 `hashcode` 和 `equals`方法，以便确认key是否重复。
+可以。但是 `Hashmap` 不允许有重复的key，所以要重写它的 `hashcode` 和 `equals`方法，以便确认 `key` 是否重复。
 
 **如果两个对象通过 `euqals()` 方法比较返回 `true`, 但这两个对象的 `hashCode()` 方法返回不同的 `hashCode `值时，这将导致 `HashMap `会把这两个对象保存在 table 数组两个不同链表中，这与`HashMap`的 要求相冲突；**
 
-**重写HashCode，不重写equals，则在table数组的同一个链表中；只有两个函数都重写，才能保证唯一性。**
+**重写 `HashCode`，不重写 `equals`，则在table数组的同一个链表中；只有两个函数都重写，才能保证唯一性。**
 
 **************
 
@@ -1644,8 +1648,6 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
     }
 }
 ```
-
-
 
 
 

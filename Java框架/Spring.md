@@ -77,19 +77,29 @@ SpringMVC、SpringBoot、Spring Cloud、Spring Cloud Dataflow等。有人亲切�
 
 ​		**`IoC`**（`Inverse of Control`：控制反转）是一种**设计思想**，就是将**原本在程序中手动创建对象的控制权，交由Spring框架来控制，在Spring工厂和配置文件中完成**。loC在其他语言中也有应用，并非Spring特有。**loC容器是 Spring 用来实现loC的载体，loC 容器实际上就是个Map（key，value），Map中存放的是各种对象**。
 
-​		**好处：解耦合**。
+​		**好处：解耦合(解决对象之间耦合度过高的问题)**。
 
-**实现IOC的方法**：注入。所谓**依赖注入(Dependency Injection: DI)**，就是由IOC容器在运行期间，动态地将某种依赖关系注入到对象之中。
+```markdown
+1. 软件系统在没有引入IOC容器之前，对象A依赖于对象B，那么对象A在初始化或者运行到某一点的时候，自己必须主动去创建对象B或者使用已经创建的对象B。无论是创建还是使用对象B，控制权都在自己手上。
+
+ 2. 软件系统在引入IOC容器之后，这种情形就完全改变了，由于IOC容器的加入，对象A与对象B之间失去了直接联系，所以，当对象A运行到需要对象B的时候，IOC容器会主动创建一个对象B注入到对象A需要的地方。
+
+ - 通过前后的对比，我们不难看出来：对象A获得依赖对象B的过程,由主动行为变为了被动行为，控制权颠倒过来了，这就是“控制反转”这个名称的由来。
+```
+
+> 既然 `IOC` 是控制反转，那么到底是“哪些方面的控制被反转了呢？”，经过详细地分析和论证后，他得出了答案：“**获得依赖对象的过程被反转了**”
+
+**实现 `IOC` 的方法**：注入。所谓**依赖注入( `Dependency Injection` : `DI`)**，就是由 `IOC` 容器在运行期间，动态地将某种依赖关系注入到对象之中。
 
 ```markdown
 # 注入： 通过Spring的工厂及配置文件，为对象(bean，组件)的成员变量赋值
 
 # 依赖注入：当一个类需要另一个类的时候，就意味着存在依赖，一旦出现依赖就可以把另一个类作为本类的成员变量，最终通过Spring的配置文件进行注入(赋值)
-	# 比如说 Service层需要DAO层，所以我们在定义 xxxxService的时候，都会定义一个xxxDAO的成员变量，我们给这个变量赋值的时候，就是依赖注入。
+	# 比如说 Service 层需要DAO层，所以我们在定义 xxxxService的时候，都会定义一个xxxDAO的成员变量，我们给这个变量赋值的时候，就是依赖注入。
 ```
 
 ##### IOC底层原理
-xml解析、**工厂设计模式**、反射。
+xml解析、**工厂设计模式**、**反射**。
 
 ##### IOC过程
 
@@ -130,14 +140,14 @@ xml解析、**工厂设计模式**、反射。
 
 ##### 两种类型的 IOC 容器(`ApplicationContext`、`BeanFactory`)
 
-- **BeanFactory**: IOC 容器的基本实现。
-- **ApplicationContext**: 提供了更多的高级特性. 是 BeanFactory 的子接口。
+- **`BeanFactory`**: `IOC` 容器的基本实现。
+- **`ApplicationContext`**: 提供了更多的高级特性. 是 `BeanFactory` 的子接口。
 
 
 
 <img src="https://gitee.com/yun-xiaojie/blog-image/raw/master/img/4476195-19f343df32c7cf74">
 
-从图上可以看到：`ApplicationContext`是`BeanFactory`的子接口，所以，`ApplicationContext`可以看做更强大的`BeanFactory`，比如说：国际化；统一的资源文件访问方式；提供在监听器中注册bean的事件；可以同时加载多个配置文件。他们两个之间的区别如下：
+从图上可以看到：`ApplicationContext`是`BeanFactory`的子接口，所以，`ApplicationContext`可以看做更强大的`BeanFactory`，比如说：国际化；统一的资源文件访问方式；提供在监听器中注册 `bean` 的事件；可以同时加载多个配置文件。他们两个之间的区别如下：
 
 1. 
    -  `BeanFactory` 采用的是 **懒加载** 机制来注入 `Bean` 的，即只有在使用到某个 `Bean` 时(调用`getBean()`)，才对该 `Bean` 进行实例化。所以，相对来说，容器启动初期速度较快，所需要的资源有限。这样就不能发现一些存在的配置问题，如果 `Bean `的某一个属性没有注入，只能等到调用`getBean()`方法后才会抛出异常。
@@ -155,7 +165,7 @@ xml解析、**工厂设计模式**、反射。
     ApplicationContext ctx = new ClassPathXmlApplicationContext(“com/baobaotao/context/beans.xml”)
     ```
 
-- 如果配置文件放置在文件系统的路径下，则可以优先考虑使用 `FilySystemXmlApplicationContext` 实现类：
+- 如果配置文件放置在文件系统的路径下，则可以优先考虑使用 `FileSystemXmlApplicationContext` 实现类：
 
   - ```java
     ApplicationContext ctx = new FileSystemXmlApplicationContext(“com/baobaotao/context/beans.xml”);  
@@ -167,9 +177,9 @@ xml解析、**工厂设计模式**、反射。
 
 #### ==Spring AOP==
 
-​		AOP（Aspect-Oriented Programming：面向切面编程）能够**将那些与业务无关，却为业务模块所共同调用的逻辑或责任（例如事务处理、日志管理、权限控制等）封装起来**，便于减少系统的重复代码，降低模块间的耦合度，并有利于未来的可拓展性和可维护性。
+​		`AOP`（Aspect-Oriented Programming：面向切面编程）能够**将那些与业务无关，却为业务模块所共同调用的逻辑或责任（例如事务处理、日志管理、权限控制等）封装起来**，便于减少系统的重复代码，降低模块间的耦合度，并有利于未来的可拓展性和可维护性。
 
-​		**Spring AOP就是基于动态代理**的，如果要代理的对象，实现了某个接口，那么`Spring AOP`会使用`JDKProxy`，去创建代理对象，而对于没有实现接口的对象，就无法使用`JDKProxy` 去进行代理了，这时候`Spring AOP`会使用`Cglib`，这时候`Spring AOP`会使用`Cglib`生成一个被代理对象的子类来作为代理，如下图所示：
+​		**`Spring AOP` 就是基于动态代理**的，如果要代理的对象，实现了某个接口，那么`Spring AOP`会使用`JDKProxy`，去创建代理对象，而对于没有实现接口的对象，就无法使用`JDKProxy` 去进行代理了，这时候`Spring AOP`会使用`Cglib`，这时候`Spring AOP`会使用`Cglib`生成一个被代理对象的子类来作为代理，如下图所示：
 
 ![image-20210421104811050](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210421104811050.png)
 
@@ -592,6 +602,24 @@ Spring容器本身并没有提供Bean的线程安全策略，因此可以说Spri
 
 ##### Spring 中的 bean 生命周期
 
+Bean 的生命周期概括起来就是 **4 个阶段**：
+
+1. 实例化（Instantiation）
+2. 属性赋值（Populate）
+3. 初始化（Initialization）
+4. 销毁（Destruction）
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/1704860a4de235aa~tplv-t2oaga2asx-watermark.awebp)
+
+- 实例化：第 1 步，实例化一个 bean 对象；
+- 属性赋值：第 2 步，为 bean 设置相关属性和依赖；
+- 初始化：第 3~7 步，步骤较多，其中第 5、6 步为初始化操作，第 3、4 步为在初始化前执行，第 7 步在初始化后执行，该阶段结束，才能被用户使用；
+- 销毁：第 8~10步，第8步不是真正意义上的销毁（还没使用呢），而是先在使用前注册了销毁的相关调用接口，为了后面第9、10步真正销毁 bean 时再执行相应的方法。
+
+> 下面是比较详细的过程。
+>
+> 好吧 其实我也不知道哪个是对的，上面这个答案讲解一下，下面这个比较冗余些。
+
 1. Spring启动，查找并加载需要被Spring管理的bean，进行Bean的实例化
 2. Bean实例化后对将Bean的引入，值注入到Bean的属性中
 3. 
@@ -606,6 +634,37 @@ Spring容器本身并没有提供Bean的线程安全策略，因此可以说Spri
 8. 如果 bean实现了 `DisposableBean` 接口，Spring将调用它的 `destory()` 接口方法，同样，如果 bean 使用了 `destory-method` 声明销毁方法，该方法也会被调用。
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/java0-1558500658.jpg)
+
+> **上面是Spring 中Bean的核心接口和生命周期，面试回答上述过程已经足够了。但是翻阅JavaDoc文档发现除了以上接口外，还有另外的初始化过程涉及的接口：**
+>
+> **摘自org.springframework.beans.factory.BeanFactory， 全部相关接口如下，上述已有的就不用着重标注，把额外的相关接口着重标注**
+
+![深究Spring中Bean的生命周期](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/java10-1558500659.jpg)
+
+文字解释如下：
+
+————————————初始化————————————
+
+- BeanNameAware.setBeanName() 在创建此bean的bean工厂中设置bean的名称，在普通属性设置之后调用，在InitializinngBean.afterPropertiesSet()方法之前调用
+- `BeanClassLoaderAware.setBeanClassLoader()`: 在普通属性设置之后，InitializingBean.afterPropertiesSet()之前调用
+- BeanFactoryAware.setBeanFactory() : 回调提供了自己的bean实例工厂，在普通属性设置之后，在InitializingBean.afterPropertiesSet()或者自定义初始化方法之前调用
+- `EnvironmentAware.setEnvironment()`: 设置environment在组件使用时调用
+- `EmbeddedValueResolverAware.setEmbeddedValueResolver()`: 设置StringValueResolver 用来解决嵌入式的值域问题
+- `ResourceLoaderAware.setResourceLoader()`: 在普通bean对象之后调用，在afterPropertiesSet 或者自定义的init-method 之前调用，在 ApplicationContextAware 之前调用。
+- `ApplicationEventPublisherAware.setApplicationEventPublisher()`: 在普通bean属性之后调用，在初始化调用afterPropertiesSet 或者自定义初始化方法之前调用。在 ApplicationContextAware 之前调用。
+- `MessageSourceAware.setMessageSource()`: 在普通bean属性之后调用，在初始化调用afterPropertiesSet 或者自定义初始化方法之前调用，在 ApplicationContextAware 之前调用。
+- ApplicationContextAware.setApplicationContext(): 在普通Bean对象生成之后调用，在InitializingBean.afterPropertiesSet之前调用或者用户自定义初始化方法之前。在ResourceLoaderAware.setResourceLoader，ApplicationEventPublisherAware.setApplicationEventPublisher，MessageSourceAware之后调用。
+- `ServletContextAware.setServletContext()`: 运行时设置ServletContext，在普通bean初始化后调用，在InitializingBean.afterPropertiesSet之前调用，在 ApplicationContextAware 之后调用**注：是在WebApplicationContext 运行时**
+- BeanPostProcessor.postProcessBeforeInitialization() : 将此BeanPostProcessor 应用于给定的新bean实例 在任何bean初始化回调方法(像是InitializingBean.afterPropertiesSet或者自定义的初始化方法）之前调用。这个bean将要准备填充属性的值。返回的bean示例可能被普通对象包装，默认实现返回是一个bean。
+- BeanPostProcessor.postProcessAfterInitialization() : 将此BeanPostProcessor 应用于给定的新bean实例 在任何bean初始化回调方法(像是InitializingBean.afterPropertiesSet或者自定义的初始化方法)之后调用。这个bean将要准备填充属性的值。返回的bean示例可能被普通对象包装
+- InitializingBean.afterPropertiesSet(): 被BeanFactory在设置所有bean属性之后调用(并且满足BeanFactory 和 ApplicationContextAware)。
+
+————————————销毁————————————
+
+在BeanFactory 关闭的时候，Bean的生命周期会调用如下方法:
+
+- `DestructionAwareBeanPostProcessor.postProcessBeforeDestruction()`: 在销毁之前将此BeanPostProcessor 应用于给定的bean实例。能够调用自定义回调，像是DisposableBean 的销毁和自定义销毁方法，这个回调仅仅适用于工厂中的单例bean(包括内部bean)
+- 实现了自定义的destory()方法
 
 ###### 接口
 
@@ -1167,7 +1226,9 @@ java里的拦截器是动态拦截Action调用的对象，它提供了一种机�
 
   - ```markdown
     > preHandle 方法：在进入具体的Controller方法之前执行。在这个方法体实现里可以做权限校验，以及其他公共检测（比如 安全校验等）。校验通过返回true，进入下一个拦截器或者直接进入Controller方法。第三个参数handler，表示待执行的Controller方法。
-    > postHandle方法：在具体Controller方法方法执行完成后，视图渲染之前执行。主要用途是在视图渲染前做一些通用的准备工作，可以把一些通用的数据放到第四个参数ModelAndView对象里，供视图渲染时使用。
+    
+    > postHandle方法：在具体Controller方法执行完成后，视图渲染之前执行。主要用途是在视图渲染前做一些通用的准备工作，可以把一些通用的数据放到第四个参数ModelAndView对象里，供视图渲染时使用。
+    
     > afterCompletion方法：在视图渲染完成之后执行，主要用于在返回页面之前做一些清理工作。比如最常见的使用场景：在preHandle方法中可以把用户的基本信息放到 ThreadLocal中，以便在同一次请求内的任意方法里都可以取到用户信息，由于spring mvc处理用户请求是用的线程池技术，ThreadLocal是与线程绑定的，如果不及时清理就会导致内存泄漏，这时我们必须在afterCompletion方法中调用ThreadLocal的清理方法，清除掉本次请求中的信息。
     ```
 
@@ -1213,13 +1274,13 @@ public abstract interface Filter{
 }
 ```
 
-Filter接口中有一个 `doFilter` 方法，当我们编写好Filter, 并配置对哪个web资源进行拦截后，WEB服务器每次在调用web资源的service方法之前, 都会先调用一下filter的 `doFilter` 方法，因此，在该方法内编写代码可达到如下目的:
+Filter接口中有一个 `doFilter` 方法，当我们编写好 `Filter`, 并配置对哪个web资源进行拦截后，WEB服务器每次在调用web资源的service方法之前, 都会先调用一下filter的 `doFilter` 方法，因此，在该方法内编写代码可达到如下目的:
 
 1. 调用目标资源之前，让一段代码执行。
 2. 是否调用目标资源(即是否让用户访问web资源)。
 3. 调用目标资源之后，让一段代码执行。
 
-web服务器在调用doFilter方法时，会传递一个`filterChain`对象进来，`filterChain`对象是filter接口中最重要的一个对象，它也提供了一个`doFilter`方法，开发人员可以根据需求决定是否调用此方法，调用该方法，则web服务器就会调用web资源的service方法，即web资源就会被访问, 否则web资源不会被访问。
+web服务器在调用 `doFilter` 方法时，会传递一个`filterChain`对象进来，`filterChain`对象是 `filter` 接口中最重要的一个对象，它也提供了一个`doFilter`方法，开发人员可以根据需求决定是否调用此方法，调用该方法，则web服务器就会调用web资源的service方法，即web资源就会被访问, 否则web资源不会被访问。
 
 > Filter的生命周期
 
@@ -2057,8 +2118,8 @@ public @interface ControllerAdvice {
 
 ##### @EnableAsync与@Async
 
-- `@Async`是 spring 为了方便开发人员进行异步调用的出现的，在方法上加入这个注解，spring 会从线程池中获取一个新的线程来执行方法，实现异步调用。
-- `@EnableAsync`表示开启对异步任务的支持，可以放在 springboot 的启动类上，也可以放在自定义线程池的配置类上。
+- `@Async`是 spring 为了方便开发人员进行异步调用的出现的，在方法上加入这个注解，`spring` 会从线程池中获取一个新的线程来执行方法，实现异步调用。
+- `@EnableAsync`表示开启对异步任务的支持，可以放在 `springboot` 的启动类上，也可以放在自定义线程池的配置类上。
 
 ###### 使用方法
 
@@ -2097,16 +2158,15 @@ public @interface ControllerAdvice {
       		return executor;
       	}
       }
-      
       ```
-
-   2. `@Async` 的使用一样是在 service 层的方法上加，如果配置了多个线程池，可以用 `@Async("name")`，那么表示线程池的 `@Bean` 的 name，来指定用哪个线程池处理。
-
-      1. 假如只配置了一个线程池，直接用 `@Async` 就会用自定义的线程池执行
-
-      2. 假如配置了多个线程池，用 `@Async` 没指定用哪个线程池，会用默认的 `SimpleAsyncTaskExecutor`来处理。
-
-      3. ```java
+   
+2. `@Async` 的使用一样是在 service 层的方法上加，如果配置了多个线程池，可以用 `@Async("name")`，那么表示线程池的 `@Bean` 的 `name`，来指定用哪个线程池处理。
+   
+   1. 假如只配置了一个线程池，直接用 `@Async` 就会用自定义的线程池执行
+   
+   2. 假如配置了多个线程池，用 `@Async` 没指定用哪个线程池，会用默认的 `SimpleAsyncTaskExecutor`来处理。
+   
+   3. ```java
          @Service
          public class testAsyncService {
          	Logger log = LoggerFactory.getLogger(testAsyncService.class);
@@ -2157,8 +2217,6 @@ public @interface Async {
 
 - 被 `@Async` 注解修饰的方法，返回值只能是 void 或者 Future。
 - 核心线程数配置是 8 ，队列长度应该是 `Integer.MAX_VALUE`。
-
-
 
 **************
 

@@ -730,7 +730,7 @@ $$
 
 **********************
 
-#### 如何解决Redis的并发竞争Key问题
+#### 如何解决Redis的并发竞争Key问题(Redis分布式锁)
 
 > 多个系统同时对一个key进行操作，但是最后执行的顺序和我们期望的顺序不一样，这样就导致了结果的不同。
 
@@ -747,9 +747,11 @@ $$
 4. 解铃还须系铃人。加锁和解锁必须是同一个客户端，客户端自己不能把别人加的锁给解了。
 ```
 
+##### 单节点的Redis实现分布式锁
+
 - **加锁：**
 
-  - 加锁实际上就是在 `redis` 中，给 `Key` 键设置一个值，为避免死锁，并给定一个过期时间。
+  - 加锁实际上就是在 `redis` 中，给 `key` 键设置一个值，为避免死锁，并给定一个过期时间。
 
   - ```markdown
     > SET lock_key random_value NX PX 5000
@@ -847,8 +849,275 @@ $$
       }		
       ```
 
-​		基于zookeeper临时有序节点可以实现的分布式锁。大致思想为：**每个客户端对某个方法加锁时，在zookeeper上的与该方法对应的指定节点的目录下，生成一个唯一的瞬时有序节点。判断是否获取锁的方式很简单，只需要判断有序节点中序号最小的一个。当释放锁的时候，只需将这个瞬时节点删除即可。同时，其可以避免服务宕机导致的锁无法释放，而产生的死锁问题。完成业务流程后，删除对应的子节点释放锁。**
+> 存在问题：锁不具有可重用性。	
+
+
+
+​	基于 zookeeper 临时有序节点可以实现的分布式锁。大致思想为：**每个客户端对某个方法加锁时，在zookeeper上的与该方法对应的指定节点的目录下，生成一个唯一的瞬时有序节点。判断是否获取锁的方式很简单，只需要判断有序节点中序号最小的一个。当释放锁的时候，只需将这个瞬时节点删除即可。同时，其可以避免服务宕机导致的锁无法释放，而产生的死锁问题。完成业务流程后，删除对应的子节点释放锁。**
 ​		在实践中，当然是从以可靠性为主。所以**首推Zookeeper**。
+
+##### `Redisson`中的可重入锁
+
+- 配置获取 `RedissonClient` 客户端的实例，然后`getLock`获取锁的实例，进行操作即可。
+
+  - ```java
+    public static void main(String[] args) {
+    
+        Config config = new Config();
+        config.useSingleServer().setAddress("redis://127.0.0.1:6379");
+        config.useSingleServer().setPassword("redis1234");
+        
+        final RedissonClient client = Redisson.create(config);  
+        RLock lock = client.getLock("lock1");
+        
+        try{
+            lock.lock();
+        }finally{
+            lock.unlock();
+        }
+    }
+    ```
+
+- 获取锁实例 。上面代码中 `RLock lock = client.getLock("lock1");` 这句代码就是为了获取锁的实例，然后我们可以看到它返回的是一个`RedissonLock`对象。
+
+  - ```java
+    public RLock getLock(String name) {
+        return new RedissonLock(connectionManager.getCommandExecutor(), name);
+    }
+    ```
+
+  - 在`RedissonLock`构造方法中，主要初始化一些属性。
+
+  - ```java
+    public RedissonLock(CommandAsyncExecutor commandExecutor, String name) {
+        super(commandExecutor, name);
+        //命令执行器
+        this.commandExecutor = commandExecutor;
+        //UUID字符串
+        this.id = commandExecutor.getConnectionManager().getId();
+        //内部锁过期时间
+        this.internalLockLeaseTime = commandExecutor.
+                    getConnectionManager().getCfg().getLockWatchdogTimeout();
+        this.entryName = id + ":" + name;
+    }
+    ```
+
+- 加锁
+
+  - 当我们调用`lock`方法，定位到`lockInterruptibly`。在这里，完成了加锁的逻辑。
+
+  - ```java
+    public void lockInterruptibly(long leaseTime, TimeUnit unit) throws InterruptedException {
+        
+        //当前线程ID
+        long threadId = Thread.currentThread().getId();
+        //尝试获取锁
+        Long ttl = tryAcquire(leaseTime, unit, threadId);
+        // 如果ttl为空，则证明获取锁成功
+        if (ttl == null) {
+            return;
+        }
+        //如果获取锁失败，则订阅到对应这个锁的channel
+        RFuture<RedissonLockEntry> future = subscribe(threadId);
+        commandExecutor.syncSubscription(future);
+    
+        try {
+            while (true) {
+                //再次尝试获取锁
+                ttl = tryAcquire(leaseTime, unit, threadId);
+                //ttl为空，说明成功获取锁，返回
+                if (ttl == null) {
+                    break;
+                }
+                //ttl大于0 则等待ttl时间后继续尝试获取
+                if (ttl >= 0) {
+                    getEntry(threadId).getLatch().tryAcquire(ttl, TimeUnit.MILLISECONDS);
+                } else {
+                    getEntry(threadId).getLatch().acquire();
+                }
+            }
+        } finally {
+            //取消对channel的订阅
+            unsubscribe(future, threadId);
+        }
+        //get(lockAsync(leaseTime, unit));
+    }
+    ```
+
+  - 如上代码，就是加锁的全过程。先调用`tryAcquire`来获取锁，如果返回值ttl为空，则证明加锁成功，返回；如果不为空，则证明加锁失败。这时候，它会订阅这个锁的Channel，等待锁释放的消息，然后重新尝试获取锁。流程如下：
+
+  - <img src="https://gitee.com/yun-xiaojie/blog-image/raw/master/img/13230160-6c08ae68fe9a796f.png" style="zoom:60%">
+
+  - **获取锁**
+
+  - 获取锁的过程是怎样的呢？接下来就要看`tryAcquire`方法。在这里，它有两种处理方式，一种是带有过期时间的锁，一种是不带过期时间的锁。
+
+  - ```java
+    private <T> RFuture<Long> tryAcquireAsync(long leaseTime, TimeUnit unit, final long threadId) {
+    
+        //如果带有过期时间，则按照普通方式获取锁
+        if (leaseTime != -1) {
+            return tryLockInnerAsync(leaseTime, unit, threadId, RedisCommands.EVAL_LONG);
+        }
+        
+        //先按照30秒的过期时间来执行获取锁的方法
+        RFuture<Long> ttlRemainingFuture = tryLockInnerAsync(
+            commandExecutor.getConnectionManager().getCfg().getLockWatchdogTimeout(),
+            TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_LONG);
+            
+        //如果还持有这个锁，则开启定时任务不断刷新该锁的过期时间
+        ttlRemainingFuture.addListener(new FutureListener<Long>() {
+            @Override
+            public void operationComplete(Future<Long> future) throws Exception {
+                if (!future.isSuccess()) {
+                    return;
+                }
+    
+                Long ttlRemaining = future.getNow();
+                // lock acquired
+                if (ttlRemaining == null) {
+                    scheduleExpirationRenewal(threadId);
+                }
+            }
+        });
+        return ttlRemainingFuture;
+    }
+    ```
+
+  - 接着往下看，`tryLockInnerAsync`方法是真正执行获取锁的逻辑，它是一段LUA脚本代码。在这里，它使用的是hash数据结构。
+
+  - ```java
+    <T> RFuture<T> tryLockInnerAsync(long leaseTime, TimeUnit unit,     
+                                long threadId, RedisStrictCommand<T> command) {
+    
+            //过期时间
+            internalLockLeaseTime = unit.toMillis(leaseTime);
+    
+            return commandExecutor.evalWriteAsync(getName(), LongCodec.INSTANCE, command,
+                      //如果锁不存在，则通过hset设置它的值，并设置过期时间
+                      "if (redis.call('exists', KEYS[1]) == 0) then " +
+                          "redis.call('hset', KEYS[1], ARGV[2], 1); " +
+                          "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+                          "return nil; " +
+                      "end; " +
+                      //如果锁已存在，并且锁的是当前线程，则通过hincrby给数值递增1
+                      "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then " +
+                          "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
+                          "redis.call('pexpire', KEYS[1], ARGV[1]); " +
+                          "return nil; " +
+                      "end; " +
+                      //如果锁已存在，但并非本线程，则返回过期时间ttl
+                      "return redis.call('pttl', KEYS[1]);",
+            Collections.<Object>singletonList(getName()), 
+                    internalLockLeaseTime, getLockName(threadId));
+        }
+    ```
+
+  - 这段LUA代码看起来并不复杂，有三个判断：
+
+    - **通过exists判断，如果锁不存在，则设置值和过期时间，加锁成功**
+    - **通过hexists判断，如果锁已存在，并且锁的是当前线程，则证明是重入锁，加锁成功**
+    - **如果锁已存在，但锁的不是当前线程，则证明有其他线程持有锁。返回当前锁的过期时间，加锁失败**
+
+  - <img src="https://upload-images.jianshu.io/upload_images/13230160-2046b77640392660.png?imageMogr2/auto-orient/strip|imageView2/2/w/913/format/webp" style="zoom:60%">
+
+  - 加锁成功后，在redis的内存数据中，就有一条hash结构的数据。Key为锁的名称；field为随机字符串+线程ID；值为1。如果同一线程多次调用`lock`方法，值递增1。
+
+  - ```java
+    127.0.0.1:6379> hgetall lock1
+    1) "b5ae0be4-5623-45a5-8faa-ab7eb167ce87:1"
+    2) "1"
+    ```
+
+- 解锁
+
+  - 通过调用`unlock`方法来解锁。
+
+  - ```java
+    public RFuture<Void> unlockAsync(final long threadId) {
+        final RPromise<Void> result = new RedissonPromise<Void>();
+        
+        //解锁方法
+        RFuture<Boolean> future = unlockInnerAsync(threadId);
+    
+        future.addListener(new FutureListener<Boolean>() {
+            @Override
+            public void operationComplete(Future<Boolean> future) throws Exception {
+                if (!future.isSuccess()) {
+                    cancelExpirationRenewal(threadId);
+                    result.tryFailure(future.cause());
+                    return;
+                }
+                //获取返回值
+                Boolean opStatus = future.getNow();
+                //如果返回空，则证明解锁的线程和当前锁不是同一个线程，抛出异常
+                if (opStatus == null) {
+                    IllegalMonitorStateException cause = 
+                        new IllegalMonitorStateException("
+                            attempt to unlock lock, not locked by current thread by node id: "
+                            + id + " thread-id: " + threadId);
+                    result.tryFailure(cause);
+                    return;
+                }
+                //解锁成功，取消刷新过期时间的那个定时任务
+                if (opStatus) {
+                    cancelExpirationRenewal(null);
+                }
+                result.trySuccess(null);
+            }
+        });
+    
+        return result;
+    }
+    ```
+
+  - 再看`unlockInnerAsync`方法。这里也是一段LUA脚本代码。
+
+  - ```java
+    protected RFuture<Boolean> unlockInnerAsync(long threadId) {
+        return commandExecutor.evalWriteAsync(getName(), LongCodec.INSTANCE, EVAL,
+        
+                //如果锁已经不存在， 发布锁释放的消息
+                "if (redis.call('exists', KEYS[1]) == 0) then " +
+                    "redis.call('publish', KEYS[2], ARGV[1]); " +
+                    "return 1; " +
+                "end;" +
+                //如果释放锁的线程和已存在锁的线程不是同一个线程，返回null
+                "if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then " +
+                    "return nil;" +
+                "end; " +
+                //通过hincrby递减1的方式，释放一次锁
+                //若剩余次数大于0 ，则刷新过期时间
+                "local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1); " +
+                "if (counter > 0) then " +
+                    "redis.call('pexpire', KEYS[1], ARGV[2]); " +
+                    "return 0; " +
+                //否则证明锁已经释放，删除key并发布锁释放的消息
+                "else " +
+                    "redis.call('del', KEYS[1]); " +
+                    "redis.call('publish', KEYS[2], ARGV[1]); " +
+                    "return 1; "+
+                "end; " +
+                "return nil;",
+        Arrays.<Object>asList(getName(), getChannelName()), 
+            LockPubSub.unlockMessage, internalLockLeaseTime, getLockName(threadId));
+    
+    }
+    ```
+
+  - 如上代码，就是释放锁的逻辑。同样的，它也是有三个判断：
+
+    - **如果锁已经不存在，通过publish发布锁释放的消息，解锁成功**
+    - **如果解锁的线程和当前锁的线程不是同一个，解锁失败，抛出异常**
+    - **通过hincrby递减1，先释放一次锁。若剩余次数还大于0，则证明当前锁是重入锁，刷新过期时间；若剩余次数小于0，删除key并发布锁释放的消息，解锁成功**
+
+  - <img src="https://gitee.com/yun-xiaojie/blog-image/raw/master/img/13230160-34c1a3f8ec81a652.png" style="zoom:60%">
+
+
+
+##### 多个Redis实例的分布式锁
+
+http://redis.cn/topics/distlock.html
 
 #### 如何保证缓存与数据库双写时的数据一致性
 
@@ -1386,6 +1655,135 @@ public class ConsistentHashingWithoutVirtualNode {
 [fer]的hash值为1677150790, 被路由到结点[192.168.0.3:8888]
 ```
 
-
-
 https://blog.csdn.net/suifeng629/article/details/81567777
+
+#### Redis实现消息队列
+
+##### 1、使用Redis的列表类型 (`LPUSH` + `BRPOP`)
+
+  	在 `Redis` 中，`List` 类型是按照插入顺序排序的字符串链表。和数据结构中的普通链表一样，我们可以在其头部 `(left)` 和尾部 `(right)` 添加新的元素。在插入时，如果该键并不存在，`Redis` 将为该键创建一个新的链表。与此相反，如果链表中所有的元素均被移除，那么该键也将会被从数据库中删除。`List` 中可以包含的最大元素数量是4294967295。
+
+​		从元素插入和删除的效率视角来看，如果我们是在链表的两头插入或删除元素，这将会是非常高效的操作，即使链表中已经存储了百万条记录，该操作也可以在常量时间内完成。然而需要说明的是，如果元素插入或删除操作是作用于链表中间，那将会是非常低效的。相信对于有良好数据结构基础的开发者而言，这一点并不难理解。(类似于 `java` 的 `ArrayList` )。
+
+> 1 消费生产者：**开启5个线程生产消息**
+
+```java
+public class MessageProducer extends Thread {
+    public static final String MESSAGE_KEY = "message:queue";
+    private volatile int count;
+
+    public void putMessage(String message) {
+        Jedis jedis = JedisPoolUtils.getJedis();
+        Long size = jedis.lpush(MESSAGE_KEY, message);
+        System.out.println(Thread.currentThread().getName() + " put message,size=" + size + ",count=" + count);
+        count++;
+    }
+
+    @Override
+    public synchronized void run() {
+        for (int i = 0; i < 5; i++) {
+            putMessage("message" + count);
+        }
+    }
+
+    public static void main(String[] args) {
+        MessageProducer messageProducer = new MessageProducer();
+        Thread t1 = new Thread(messageProducer, "thread1");
+        Thread t2 = new Thread(messageProducer, "thread2");
+        Thread t3 = new Thread(messageProducer, "thread3");
+        Thread t4 = new Thread(messageProducer, "thread4");
+        Thread t5 = new Thread(messageProducer, "thread5");
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t5.start();
+    }
+}
+```
+
+> 2 消息消费者：**开启两个线程消费消息**
+
+```java
+public class MessageConsumer implements Runnable {
+    public static final String MESSAGE_KEY = "message:queue";
+    private volatile int count;
+
+    public void consumerMessage() {
+        Jedis jedis = JedisPoolUtils.getJedis();
+        String message = jedis.rpop(MESSAGE_KEY);
+        System.out.println(Thread.currentThread().getName() + " consumer message,message=" + message + ",count=" + count);
+        count++;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            consumerMessage();
+        }
+    }
+
+    public static void main(String[] args) {
+        MessageConsumer messageConsumer = new MessageConsumer();
+        Thread t1 = new Thread(messageConsumer, "thread6");
+        Thread t2 = new Thread(messageConsumer, "thread7");
+        t1.start();
+        t2.start();
+    }
+}
+```
+
+> 发现问题
+
+但上述例子中消息消费者有一个问题存在，即需要不停的调用 `rpop` 方法查看 `List` 中是否有待处理消息。每调用一次都会发起一次连接，这会造成不必要的浪费。也许你会使用 `Thread.sleep()` 等方法让消费者线程隔一段时间再消费，但这样做有两个问题：
+
+  1）、如果生产者速度大于消费者消费速度，消息队列长度会一直增大，时间久了会占用大量内存空间。
+
+  2）、如果睡眠时间过长，这样不能处理一些时效性的消息，睡眠时间过短，也会在连接上造成比较大的开销。
+
+> 解决方法：==**`brpop` 和 `blpop`可以实现阻塞读取**==
+>
+> 　　`brpop` 命令可以接收多个键，其完整的命令格式为 `BRPOP key [key ...] timeout`, 如: `brpop key1 0`。意义是同时检测多个键，如果所有键都没有元素则阻塞，如果其中一个有元素则从该键中弹出该元素(==会按照 key 的顺序进行读取，可以实现具有优先级的队列==)。
+
+##### 2、发布/订阅模式
+
+> 　除了实现任务队列外，`redis` 还提供了一组命令可以让开发者实现"发布/订阅"( `publish/subscribe` )模式。"发布/订阅"模式同样可以实现进程间的消息传递，其原理如下:
+>
+> - "发布/订阅"模式包含两种角色，分别是发布者和订阅者；
+> - 订阅者可以订阅一个或者多个频道(channel)；
+> - 而发布者可以向指定的频道(channel)发送消息，所有订阅此频道的订阅者都会收到此消息。
+
+- 发布消息：`publish channel message`
+
+  - 例如：
+
+  - ```java
+    127.0.0.1:6379> publish channel:1 hi
+    (integer) 0
+    ```
+
+  - 这样消息就发出去了。返回值表示接收这条消息的订阅者数量。发出去的消息不会被持久化，也就是有客户端订阅 `channel:1` 后只能接收到后续发布到该频道的消息，之前的就接收不到了。
+
+- 订阅频道：`subscribe channel1 [channel2 ...]` 
+
+  - > 不会收到订阅之前就发布到该频道的消息
+
+  - 例如：
+
+  - ```java
+    127.0.0.1:6379> subscribe channel:1
+    Reading messages... (press Ctrl-C to quit)
+    1) "subscribe"
+    2) "channel:1"
+    3) (integer) 1
+    ```
+
+  - 执行上面命令客户端会进入订阅状态，处于此状态下客户端不能使用除 `subscribe`、`unsubscribe`、`psubscribe` 和 `punsubscribe` 这四个属于"发布/订阅"之外的命令，否则会报错。
+
+进入订阅状态后客户端可能收到 3 种类型的回复。每种类型的回复都包含 3 个值，第一个值是消息的类型，根据消类型的不同，第二个和第三个参数的含义可能不同。
+
+消息类型的取值可能是以下 3 个:
+
+- `subscribe`。   表示订阅成功的反馈信息。第二个值是订阅成功的频道名称，第三个是当前客户端订阅的频道数量。
+- `message`。        表示接收到的消息，第二个值表示产生消息的频道名称，第三个值是消息的内容。
+- `unsubscribe`。表示成功取消订阅某个频道。第二个值是对应的频道名称，第三个值是当前客户端订阅的频道数量，当此值为0时客户端会退出订阅状态，之后就可以执行其他非"发布/订阅"模式的命令了。

@@ -197,7 +197,7 @@ main线程执行main方法。
 
 ![image-20210427165010587](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210427165010587.png)
 
-
+*****************
 
 ####  为什么使用多线程呢
 
@@ -374,11 +374,11 @@ public class TestSync {
 
 ##### 方式二：wait/notify 机制
 
-- **wait()——让当前线程 ( `Thread.concurrentThread()` 方法所返回的线程) 释放对象锁并进入等待(阻塞)状态。**
-- **notify()——唤醒一个正在等待相应对象锁的线程，使其进入就绪队列，以便在当前线程释放锁后竞争锁，进而得到CPU的执行。**
-- **notifyAll()——唤醒所有正在等待相应对象锁的线程，使它们进入就绪队列，以便在当前线程释放锁后竞争锁，进而得到CPU的执行。**
+- **`wait()` ——让当前线程 ( `Thread.concurrentThread()` 方法所返回的线程) 释放对象锁并进入等待(阻塞)状态。**
+- **`notify()`——唤醒一个正在等待相应对象锁的线程，使其进入就绪队列，以便在当前线程释放锁后竞争锁，进而得到CPU的执行。**
+- **`notifyAll()`——唤醒所有正在等待相应对象锁的线程，使它们进入就绪队列，以便在当前线程释放锁后竞争锁，进而得到CPU的执行。**
 
-> wait和 notify必须配合synchronized使用，wait方法释放锁，notify方法不释放锁
+> `wait()` 和 `notify()`必须配合 `synchronized` 使用，`wait()`方法释放锁，`notify()`方法不释放锁。
 
 ```java
 public class TestSync {
@@ -432,11 +432,11 @@ public class TestSync {
 
 ![在这里插入图片描述](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20190112154820961.png)
 
-​		线程A发出 `notify()` 唤醒通知之后，依然是走完了自己线程的业务之后，线程B才开始执行，这也正好说明了，notify()方法不释放锁，而wait()方法释放锁。
+​		线程A发出 `notify()` 唤醒通知之后，依然是走完了自己线程的业务之后，线程B才开始执行，这也正好说明了，`notify()` 方法不释放锁，而 `wait()` 方法释放锁。
 
 ##### 方式三：Condition
 
-​    `Condition` 是在java 1.5中出现的，它用来替代传统的 `Object` 的 `wait()/notify()` 实现线程间的协作，它的使用依赖于 `Lock`，`Condition`、`Lock` 和 `Thread` 三者之间的关系如下图所示。相比使用 `Object` 的 `wait()/notify()`，使用`Condition` 的 `await()/signal()` 这种方式能够更加安全和高效地实现线程间协作。
+​    `Condition` 是在 java 1.5 中出现的，它用来替代传统的 `Object` 的 `wait()/notify()` 实现线程间的协作，它的使用依赖于 `Lock`，`Condition`、`Lock` 和 `Thread` 三者之间的关系如下图所示。相比使用 `Object` 的 `wait()/notify()`，使用`Condition` 的 `await()/signal()` 这种方式能够更加安全和高效地实现线程间协作。
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20170519154927256)
 
@@ -794,6 +794,8 @@ class TV{
 
 Linux相比与其他操作系统(包括其他类Unix系统)有很多的优点，其中有一项就是，其上下文切换和模式切换的时间消耗非常少。
 
+*******************
+
 #### ==什么是线程死锁？如何避免死锁？==
 
 > 多个线程同时被阻塞，他们中的一个或者全部都在等待某个资源被释放。由于线程被无限期地阻塞，因此程序不可能被正常终止。
@@ -843,7 +845,7 @@ Linux相比与其他操作系统(包括其他类Unix系统)有很多的优点，
 
 - **修饰实例方法：**作用于当前对象实例加锁，进入同步代码前要获得当前对象实例的锁。![image-20210410143056419](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410143056419.png)
 
-- **修饰静态方法(等价于修饰类)：**静态方法是随着类的加载而加载的，也就是给==当前类加锁，会作用于类的所有对象实例==，进入同步代码前要获得当前class的锁。因为静态成员不属于任何一个实例对象，是类成员(static表明这是该类的一个静态资源，不管new了多少个对象，只有一份)。所以，如果一个线程A调用一个实例对象的非静态`synchronized` 方法，而线程B需要调用这个实例对象所属类的静态`synchronized`方法，是允许的，不会发生互斥现象，**因为访问静态`synchronized`方法占用的锁是当前类的锁，而访问非静态`synchronized`方法占用的锁是当前实例对象锁。**![image-20210410143212519](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410143212519.png)
+- **修饰静态方法(等价于修饰类)：**静态方法是随着类的加载而加载的，也就是给==当前类加锁，会作用于类的所有对象实例==，进入同步代码前要获得当前class的锁。因为静态成员不属于任何一个实例对象，是类成员(static表明这是该类的一个静态资源，不管new了多少个对象，只有一份)。所以，如果一个线程A调用一个实例对象的非静态`synchronized` 方法，而线程 B 需要调用这个实例对象所属类的静态`synchronized`方法，是允许的，不会发生互斥现象，**因为访问静态`synchronized`方法占用的锁是当前类的锁，而访问非静态`synchronized`方法占用的锁是当前实例对象锁。**![image-20210410143212519](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410143212519.png)
 
 - **修饰代码块：**指定加锁对象，对给定对象/类加锁。`synchronized(this object)`表示进入同步代码库前要获得给定对象的锁。`synchronized(类.clas)`表示进入同步代码前要获得当前 class的锁。![image-20210410143317009](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410143317009.png)
 
@@ -912,13 +914,11 @@ Linux相比与其他操作系统(包括其他类Unix系统)有很多的优点，
 
 但是由于JVM具有指令重排的特性，执行顺序有可能变成 $1\rightarrow3\rightarrow2$ 。指令重排在单线程环境下不会出现问题，但是在多线程环境下会导致一个线程获得还没有初始化的实例。例如，线程T1执行了1和3，此时T2调用`getUniqueInstance()`后发现`uniqueInstance`不为空，因此返回`uniqueInstance`，但此时`uniqueInstance`还未被初始化。 
 
-使用`volatile`可以禁止JVM的指令重排，保证在多线程的环境下也能正常运行。
+使用`volatile`可以禁止 `JVM` 的指令重排，保证在多线程的环境下也能正常运行。
 
 ###### **饿汉式**
 
 ```java
-package LearnJUC.Single;
-
 /**
  * @author LYJ
  * @create 2021-05-13 11:15
@@ -987,8 +987,6 @@ public class Singleton1 {
 ###### 静态内部类
 
 ```java
-package LearnJUC.Single;
-
 /**
  * @author LYJ
  * @create 2021-05-13 11:36
@@ -1008,10 +1006,6 @@ public class Holder {
     }
 }
 ```
-
-
-
-
 
 ##### 构造方法不能使用synchronized修饰
 
@@ -1039,7 +1033,7 @@ public class Holder {
 
 **在执行`monitorexit `指令后，将锁计数器设为0，表明锁被释放。如果获取对象锁失败，那当前线程就要阻塞等待，直到锁被另外一个线程释放为止。**
 
-==Synchronized的语义底层是通过一个monitor的对象来完成，其实wait/notify等方法也依赖于monitor对象，这就是为什么只有在同步块或者方法中才能调用wait/notify等方法，否则会抛出`java.lang.IllegalMonitorStateException`的异常的原因。==
+==Synchronized的语义底层是通过一个 `monitor` 的对象来完成，其实 `wait/notify` 等方法也依赖于`monitor` 对象，这就是为什么只有在同步块或者方法中才能调用 `wait/notify` 等方法，否则会抛出`java.lang.IllegalMonitorStateException`的异常的原因。==
 
 ###### 2. synchronized 修饰方法的情况
 
@@ -1131,7 +1125,7 @@ public class Holder {
 
 ******************
 
-##### 锁升级
+##### ==锁升级==
 
 > 无锁(锁对象初始化时)$－＞$　偏向锁(有线程请求锁) $－＞$ 轻量级锁(多线程轻度竞争)$－＞$重量级锁(线程过多或长耗时操作，线程自旋过度消耗cpu)；
 >
@@ -1261,6 +1255,8 @@ CPU Cache的工作方式：
 
 **CPU为了解决内存缓存不一致问题可以通过制定缓存一致协议或者其他手段来解决。**
 
+********************
+
 #### JMM(Java内存模型 Java Memory Model)
 
 ##### 概念
@@ -1366,101 +1362,104 @@ Volatile是Java中的一个关键字，是Java虚拟机提供的**轻量级的�
 
 #####　保证可见性
 
-> > 可见性：当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看到修改的值。
-> >
-> > ###### ![image-20210513094202241](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210513094202241.png)**实现原理：**
-> >
-> > 1. **缓存一致性协议：**
-> >
-> >    - ```markdown
-> >     **
-> >      1. 现代处理器为了提高处理速度，在处理器和内存之间增加了多级缓存，处理器不会直接去和内存通信，将数据读到内部缓存中再进行操作。由于引入了多级缓存，就存在缓存数据不一致问题。
-> >      ```
-> >     2. 缓存一致性协议: 每个处理器通过嗅探在总线上传播的数据来检查自己缓存的值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器要对这个数据进行修改操作的时候，会强制重新从系统内存里把数据读到处理器缓存里。
-> >        **
-> >      ```
-> >    
-> >    - 如果一个变量被 **`volatile`** 所修饰的话，在每次数据变化之后，其值都会被强制刷入主存。而其他处理器的缓存由于遵守了**缓存一致性协议**，也会把这个变量的值从主存加载到自己的缓存中。这就保证了一个 **`volatile`** 在并发编程中，其值在多个缓存中是可见的。
-> >      ```
-> >
-> > 2. **`happen-before`**
-> >
-> >    - 对 **`volatile`** 域的**写入操作** **`happends-before`** 于每一个后续对同一域的**读操作**。
-> >     当我们去写一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存中的共享变量值刷新到主内存中，读一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存置为无效，接下来线程从主内存中读取共享变量。两个线程，线程A写一个 **`volatile`** 变量，线程B随后读这个 **`volatile`** 变量。这个过程实际上就是线程A和线程B通过**主内存**进行通信(线程间通信)。
-> >
-> >   - ```markdown
-> >      # happen-before法则
-> >      1. 程序次序法则：按照代码顺序执行
-> >     2. 监视器锁法则：一个unlock操作要先于同一个锁的lock操作
-> >      3. volatile变量法则：对volatile域的写入操作happends-before于每一个后续对同一域的读操作
-> >      4. 线程启动法则：在一个线程里，对Thread.start()的调用会先于Thread.run()；
-> >      5. 线程终结法则：线程中的任何动作都happends-before于其他线程检测到这个线程已经终结，或者从Thread.join 调用中成功返回，或者Thread.isAlive返回false
-> >      > 中断法则：一个线程调用另一个线程的interrupt.happens-before于被中断的线程发现中断。(通过跑出interruptedException,或者调用isInterrupted和interrupted)
-> >      6. 终结法则：一个对象的构造函数的结束happends-before于这个对象finalizer的开始。
-> >      7. 传递性：如果A happens-before于B, 且B happends-before 于C, 则A happens-before 于C
-> >     ```
-> >
-> > 
+> 可见性：当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看到修改的值。
+>
+> ###### ![image-20210513094202241](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210513094202241.png)**实现原理：**
+>
+> 1. **缓存一致性协议：**
+>
+>    - ```markdown
+>     **
+>      > 现代处理器为了提高处理速度，在处理器和内存之间增加了多级缓存，处理器不会直接去和内存通信，将数据读到内部缓存中再进行操作。由于引入了多级缓存，就存在缓存数据不一致问题。
+>      ```
+>      2. 缓存一致性协议: 每个处理器通过嗅探在总线上传播的数据来检查自己缓存的值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器要对这个数据进行修改操作的时候，会强制重新从系统内存里把数据读到处理器缓存里。
+>      ```markdown
+>      
+>      ```
+>    > 如果一个变量被 **`volatile`** 所修饰的话，在每次数据变化之后，其值都会被强制刷入主存。而其他处理器的缓存由于遵守了**缓存一致性协议**，也会把这个变量的值从主存加载到自己的缓存中。这就保证了一个 **`volatile`** 在并发编程中，其值在多个缓存中是可见的。
+>    
+>      ```
+>      
+>      ```
+>    
+> 2. **`happen-before`**
+>
+>    - 对 **`volatile`** 域的**写入操作** **`happends-before`** 于每一个后续对同一域的**读操作**。
+>    当我们去写一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存中的共享变量值刷新到主内存中，读一个 **`volatile`** 变量的时候，JMM会把该线程对应的本地内存置为无效，接下来线程从主内存中读取共享变量。两个线程，线程A写一个 **`volatile`** 变量，线程B随后读这个 **`volatile`** 变量。这个过程实际上就是线程A和线程B通过**主内存**进行通信(线程间通信)。
+>
+>   - ```markdown
+>     # happen-before法则
+>      1. 程序次序法则：按照代码顺序执行
+>     2. 监视器锁法则：一个unlock操作要先于同一个锁的lock操作
+>      3. volatile变量法则：对volatile域的写入操作happends-before于每一个后续对同一域的读操作
+>      4. 线程启动法则：在一个线程里，对Thread.start()的调用会先于Thread.run()；
+>      5. 线程终结法则：线程中的任何动作都happends-before于其他线程检测到这个线程已经终结，或者从Thread.join 调用中成功返回，或者Thread.isAlive返回false
+>      > 中断法则：一个线程调用另一个线程的interrupt.happens-before于被中断的线程发现中断。(通过跑出interruptedException,或者调用isInterrupted和interrupted)
+>      6. 终结法则：一个对象的构造函数的结束happends-before于这个对象finalizer的开始。
+>      7. 传递性：如果A happens-before于B, 且B happends-before 于C, 则A happens-before 于C
+>     ```
+>
+> 
 
 ##### ==不保证原子性==
 
-> > 原子性：一个操作或者多个操作 要么全部执行并且执行的过程不会被任何因素打断，要么就都不执行。
+> 原子性：一个操作或者多个操作 要么全部执行并且执行的过程不会被任何因素打断，要么就都不执行。
+>
+> > ```java
+> > package LearnJUC.LearnVolatile;
+> > 
+> > public class VolatileDemo {
+> >  private volatile static int num = 0;
+> > 
+> >  public static void Plus(){
+> >      ++num;
+> >  }
+> > 
+> >  public static void main(String[] args) {
+> >      // 理论上结果应该为20000，可是最后不是
+> >      for (int i = 0; i < 20; i++) {
+> >          new Thread(()->{
+> >              for (int j = 0; j < 1000; j++) {
+> >                  Plus();
+> >              }
+> >          }).start();
+> >      }
+> >      System.out.println(Thread.currentThread().getName() + "===>" + num);
+> >  }
+> > }
+> > ```
 > >
-> > > ```java
-> > > package LearnJUC.LearnVolatile;
-> > > 
-> > > public class VolatileDemo {
-> > >  private volatile static int num = 0;
-> > > 
-> > >  public static void Plus(){
-> > >      ++num;
-> > >  }
-> > > 
-> > >  public static void main(String[] args) {
-> > >      // 理论上结果应该为20000，可是最后不是
-> > >      for (int i = 0; i < 20; i++) {
-> > >          new Thread(()->{
-> > >              for (int j = 0; j < 1000; j++) {
-> > >                  Plus();
-> > >              }
-> > >          }).start();
-> > >      }
-> > >      System.out.println(Thread.currentThread().getName() + "===>" + num);
-> > >  }
-> > > }
-> > > ```
-> > >
-> > > **如果不加lock和synchronized，怎么样保证原子性**
-> > >
-> > > 使用原子类
-> > >
-> > > ![image-20210513095621882](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210513095621882.png)
-> > >
-> > > ```java
-> > > import java.util.concurrent.atomic.AtomicInteger;
-> > > 
-> > > public class VolatileDemo {
-> > >  private volatile static AtomicInteger num = new AtomicInteger(); // 原子类的Integer
-> > > 
-> > >  public synchronized static void Plus(){
-> > > //        ++num; // 不是原子性操作
-> > >      num.getAndIncrement(); // AtomicInteger的+1操作 (CAS)
-> > >  }
-> > > 
-> > >  public static void main(String[] args) {
-> > >      for (int i = 0; i < 20; i++) {
-> > >          new Thread(()->{
-> > >              for (int j = 0; j < 1000; j++) {
-> > >                  Plus();
-> > >              }
-> > >          }).start();
-> > >      }
-> > >      System.out.println(Thread.currentThread().getName() + "===>" + num);
-> > >  }
-> > > }
-> > > ```
-> > >
-> > > 
+> > **如果不加 `lock` 和 `synchronized`，怎么样保证原子性**
+> >
+> > 使用原子类
+> >
+> > ![image-20210513095621882](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210513095621882.png)
+> >
+> > ```java
+> > import java.util.concurrent.atomic.AtomicInteger;
+> > 
+> > public class VolatileDemo {
+> >  private volatile static AtomicInteger num = new AtomicInteger(); // 原子类的Integer
+> > 
+> >  public synchronized static void Plus(){
+> > //        ++num; // 不是原子性操作
+> >      num.getAndIncrement(); // AtomicInteger的+1操作 (CAS)
+> >  }
+> > 
+> >  public static void main(String[] args) {
+> >      for (int i = 0; i < 20; i++) {
+> >          new Thread(()->{
+> >              for (int j = 0; j < 1000; j++) {
+> >                  Plus();
+> >              }
+> >          }).start();
+> >      }
+> >      System.out.println(Thread.currentThread().getName() + "===>" + num);
+> >  }
+> > }
+> > ```
+> >
+> > 
 
 ##### 禁止指令重排
 
@@ -1530,22 +1529,24 @@ Volatile是Java中的一个关键字，是Java虚拟机提供的**轻量级的�
 - **`volatile `关键字能保证数据的可⻅性，但不能保证数据的原⼦性。`synchronized `关键字两者都能保证。**
 - **`volatile `关键字主要⽤于解决变量在多个线程之间的可⻅性，⽽ `synchronized `关键字解决的是多个线程之间访问资源的同步性。**
 
-
+********************
 
 #### synchronized和lock的区别
 
-- `lock `是一个接口，而 `synchronized `是 `java` 的一个关键字，`synchronized`是内置的语言实现；
+- `Lock `是一个接口，而 `synchronized `是 `java` 的一个关键字，`synchronized`是内置的语言实现；
 - `Lock `是显式锁(手动开启和关闭锁)；`synchronized `是隐式锁，出了作用域自动释放；
   - `Lock `只有代码块锁，`synchronized` 有代码块锁和方法锁；
 - `synchronized `在发生异常时候会自动释放占有的锁，因此不会出现死锁；而 `lock `发生异常的时候，不会主动释放占有的锁，必须手动 `unlock `来释放锁，可能引起死锁的发生。(所以 `lock `将同步代码块用 `try catch` 包起来，`finally`中写入 `unlock`，避免死锁的发生。)
 - `lock `等待锁过程中可以用 `interrupt` 来中断等待，而 `synchronized` 只能等待锁的释放，不能响应中断；
 - `Lock `可以通过 `trylock` 来知道有没有获取锁，而 `synchronized` 不能；
 - ` synchronized` 的锁可重入、不可中断、非公平，而 `Lock `锁可重入、可中断、可公平(两者皆可)
-- ` synchronized` 使用Object对象本身的wait 、notify、notifyAll调度机制，而Lock可以使用Condition进行线程之间的调度；
+- ` synchronized` 使用 Object 对象本身的 `wait `、`notify`、`notifyAll` 调度机制，而 `Lock` 可以使用`Condition` 进行线程之间的调度；
+
+*********
 
 #### ==Java Lock的底层实现原理==
 
-Lock完全用Java写成，在java这个层面是无关JVM实现的。
+`Lock` 完全用  `Java` 写成，在 `java` 这个层面是无关 `JVM` 实现的。
 
 在`java.util.concurrent.locks`包中有很多Lock的实现类，常用的有`ReentrantLock`、`ReadWriteLock`(实现类`ReentrantReadWriteLock`)，其实现都依赖`java.util.concurrent.AbstractQueuedSynchronizer`类，实现思路都大同小异，因此我们以`ReentrantLock`作为讲解切入点。
 
@@ -1577,7 +1578,7 @@ Sync又有两个子类:
 ###### 线程获取锁的大致过程
 
 1. 读取表示锁状态的变量
-2. 如果表示锁状态的变量的值为 0，那么当前线程尝试将变量值设置为1(通过CAS操作完成)，当多个线程同时将表示状态的变量值由0设置为1时，仅有一个线程能成功，其余线程会失败：
+2. 如果表示锁状态的变量的值为 0，那么当前线程尝试将变量值设置为 `1` (通过 `CAS` 操作完成)，当多个线程同时将表示状态的变量值由0设置为1时，仅有一个线程能成功，其余线程会失败：
    1. 若成功，表示获取了锁。
       1. 如果该线程位于队列中，则将其出队列(并将下一个结点变成队列的头结点**`FIFO`**).
       2. **如果当前线程未入列，则不用对队列进行维护**。
