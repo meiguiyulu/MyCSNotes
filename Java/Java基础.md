@@ -191,7 +191,7 @@ private int newCapacity(int minCapacity) {
 
 - **基本类型**
   - **基本类型没有 `toString()`方法 **
-  - 基本类型转为 string 类型推荐使用 `String.valueOf()`
+  - 基本类型转为 `string` 类型推荐使用 `String.valueOf()`
   - `(String)`是标准的类型转换，将 `Object` 类型转为 `String` 类型，使用 `(String)` 强转时，最好使用`instanceof` 做一个类型检查，以判断是否可以进行强转，否则容易抛出 `ClassCastException` 异常。需要注意的是编写的时候，编译器并不会提示有语法错误，所以这个方法要谨慎的使用。
     - ![image-20210923220202121](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210923220202121.png)
     - ![image-20210923220225972](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210923220225972.png)
@@ -413,13 +413,12 @@ public void doSomething(ArrayList list){
 
 #### 9、装箱与拆箱
 
-> 装箱：自动将基本数据类型转换为包装器类型；基本类型->包装类
+> 装箱：自动将基本数据类型转换为包装器类型；基本类型 -> 包装类
 >
-> 拆箱：自动将包装器类型转换为基本数据类型。包装类->基本类型
+> 拆箱：自动将包装器类型转换为基本数据类型。包装类 -> 基本类型
 >
 > > 装箱过程是通过调用包装器的`valueOf`方法实现的，而拆箱过程是通过调用包装器的` xxxValue`方法实现的。(xxx代表对应的基本数据类型)。
 >
-> ![image-20210409100230688](image/image-20210409100230688.png)
 
 >![image-20210409100401900](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210409100401900.png)
 >
@@ -429,18 +428,17 @@ public void doSomething(ArrayList list){
 >
 >​		==***上面的代码中i1和i2的数值为100，因此会直接从cache中取已经存在的对象，所以i1和i2指向的是同一个对象，而i3和i4则是分别指向不同的对象。***==
 >
->==int 和 Integer在进行比较的时候，Integer会进行拆箱，转为int值与int进行比较。这个时候，'\=='比较的是数值大小==
+>==`int` 和 `Integer` 在进行比较的时候，Integer会进行拆箱，转为int值与int进行比较。这个时候，'\=='比较的是数值大小。==
 >
 >```java
->Integer i1 = 120;
->int i2 = 120;
+>Integer i1 = 140;
+>int i2 = 140;
 >System.out.println(i1 == i2); // true
 >
 >Integer i1 = 80;
 >int i2 = 80;
 >System.out.println(i1 == i2); // true
 >```
->
 >
 
 

@@ -37,8 +37,6 @@
 	   6.1.3 定义对应的额外功能的方法, 并在方法上使用@Before、@After、@Around等注解, 并在其中指定pointcut, 这些方法传入的参数为JointPoint, 在方法中实现原有方法的调用、要加入的额外功能等等信息。
 ```
 
-
-
 ## 登录方式
 
 ### 1. Github登录
@@ -135,7 +133,9 @@ OAuth 2.0 列举了四种授权类型，分别用于不同的场景：
 
 #### 2.1 登录逻辑
 
-关于登录模块，我们先来梳理一下逻辑，首先是把登录注册的页面复制进来，然后改成模板形式（头和尾，侧边栏等），再然后集成 shiro 框架，写登录注册接口，login -> realm(认证）-> 写登录注册逻辑 -> 页面的 shiro 标签 -> 分布式 session 的相关配置.
+关于登录模块，我们先来梳理一下逻辑，首先是把登录注册的页面复制进来，然后改成模板形式（头和尾，侧边栏等），再然后集成 `shiro` 框架，写登录注册接口。
+
+> login -> realm(认证）-> 写登录注册逻辑 -> 页面的 shiro 标签 -> 分布式 session 的相关配置.
 
 `LoginController`
 
@@ -171,7 +171,7 @@ OAuth 2.0 列举了四种授权类型，分别用于不同的场景：
     }
 ```
 
-上面的代码，首先分别写了一下 login 的 get 和 post 的方式，一个是跳转到 login，然后我们通过异步的 post 方式来提交 form 表单数据，login 的主要逻辑很简单，主要就一行代码：
+上面的代码，首先分别写了一下 `login` 的 `get` 和 `post` 的方式，一个是跳转到 `login`，然后我们通过异步的 `post` 方式来提交 `form` 表单数据，`login` 的主要逻辑很简单，主要就一行代码：
 
 ```java
 SecurityUtils.getSubject().login(token);
@@ -220,12 +220,6 @@ public AccountProfile login(String username, String password) {
     return profile;
 }
 ```
-
-
-
-
-
-
 
 
 #### 2.2 注册
@@ -300,9 +294,8 @@ public AccountProfile login(String username, String password) {
    <div class="">
        <image id="kapthca" src="/kapthca.jpg"></image>
    </div>
-   
    ```
-
+   
 5. 那么流是接通前端后端的，到后端还需要验证验证码的正确性，所以生成验证码的时候我们需要把验证码先存到 session 中，然后注册接口中再从 session 中获取出来然后比较是否正确。
 
    ```java
@@ -371,11 +364,7 @@ public AccountProfile login(String username, String password) {
        }
    ```
 
-
-
-
-
-
+***********
 
 ## 数据库设计 
 
@@ -404,8 +393,6 @@ public AccountProfile login(String username, String password) {
   - | 主键 | 标题        | 内容 | 创建时间 | 修改时间 | 创建人的id | 评论数        | 阅读数        | 点赞数        | 标签         |
     | ---- | ----------- | ---- | -------- | -------- | ---------- | ------------- | ------------- | ------------- | ------------ |
     | int  | varchar(50) | text | bigint   | bigint   | int        | int default 0 | int default 0 | int default 0 | varchar(255) |
-  
-    
   
 - **`notification`**
   

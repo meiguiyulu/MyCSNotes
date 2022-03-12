@@ -757,7 +757,7 @@ final Node<K,V> getNode(int hash, Object key) {
 
 1. **每个节点或者是黑色，或者是红色。**
 2. **根节点是黑色。**
-3. **个叶子节点(NIL)是黑色。 [注意：这里叶子节点，是指为空(NIL或NULL)的叶子节点！]**
+3. **叶子节点(NIL)是黑色。 [注意：这里叶子节点，是指为空(NIL或NULL)的叶子节点！]**
 4. **如果一个节点是红色的，则它的子节点必须是黑色的。**
 5. **从一个节点到该节点的子孙节点的所有路径上包含相同数目的黑节点**
 
@@ -1326,7 +1326,7 @@ static final class ForwardingNode<K,V> extends Node<K,V> {
 - 在动态扩容的过程中标志某个桶已经被复制到了新的桶数组中
 - 如果在动态扩容的时候有`get`方法的调用，则`ForwardingNode`将会把请求转发到新的桶数组中，以避免阻塞`get`方法的调用，`ForwardingNode`在构造的时候会将扩容后的桶数组`nextTable`保存下来。
 
-**`UNSAFE.compareAndSwap***`**
+**`UNSAFE.compareAndSwap`**
 
 这是在`Java 8`版本的`ConcurrentHashMap`中实现`CAS`的工具，以`int`类型为例其方法定义如下：
 
@@ -1661,13 +1661,9 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
 
 首先将数据分为一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据时，其他段的数据也能被其他线程访问。
 
-**ConcurrentHashMap是由Segment数组结构和HasEntry数组结构组成。**
+**`ConcurrentHashMap` 是由 `Segment` 数组结构和 `HasEntry` 数组结构组成。**
 
 `Segment `实现了`ReentrantLock`，所以`Segment `是一种可重入锁，扮演锁的角色。`HashEntry`用于存储键值对数据。
-
-一个ConcurrentHashMap里包含一个Segment 数组。Segment的结构和HashMap类似，是一种数组和链表结构，一个Segment 包含一个HashEntry 数组，每个HashEntry 是一个链表结构的元素，每个Segment 守护着一个HashEntry数组里的元素，当对HashEntry数组的数据进行修改时，必须首先获得对应的Segment的锁。
-
-
 
 ```java
 static class Segment<K，V> extends ReentrantLock implements Serializable
@@ -1737,7 +1733,7 @@ static class Segment<K，V> extends ReentrantLock implements Serializable
 
 
 
-###### JDK 1.8
+###### **JDK 1.8**
 
 > **数组+链表/红黑二叉树**(==`CAS`和`synchronized`==)
 
@@ -1745,9 +1741,9 @@ static class Segment<K，V> extends ReentrantLock implements Serializable
 
 ![image-20210410092923531](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210410092923531.png)
 
-​		`ConcurrentHashMap`取消了`Segment` 分段锁，采用**==`CAS`和`synchronized`==**来保证并发安全。数据结构跟`HashMap`1.8的结构类似，**数组+链表/红黑二叉树**。Java8在链表长度超过一定阈值(8)时将链表(寻址时间复杂度为O(N))转换为红黑树(寻址时间复杂度为O(log(N)))
+​		`ConcurrentHashMap`取消了`Segment` 分段锁，采用**==`CAS`和`synchronized`==**来保证并发安全。数据结构跟`HashMap`1.8 的结构类似，**数组+链表/红黑二叉树**。Java8在链表长度超过一定阈值(8)时将链表(寻址时间复杂度为O(N))转换为红黑树(寻址时间复杂度为O(log(N)))
 
-> **synchronized只锁当前链表或红黑二叉树的首节点，这样只要hash不冲突，就不会产生并发，效率又提升N倍。**
+> **`synchronized` 只锁当前链表或红黑二叉树的首节点，这样只要 `hash` 不冲突，就不会产生并发，效率又提升N倍。**
 
 ##### ConcurrentHashMap 读操作(get)为什么不需要加锁？
 
