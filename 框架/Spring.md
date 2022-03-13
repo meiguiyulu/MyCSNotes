@@ -197,17 +197,17 @@ xml解析、**工厂设计模式**、**反射**。
     环绕通知：@Around 功能强大，可代替以上四种通知，还可以控制目标业务方法是否执行以及何时执行
 ```
 
-**动态代理类没有对应的 `.class`文件，所以JVM不会为其分配 `ClassLoader`。**
+**动态代理类没有对应的 `.class`文件，所以 JVM 不会为其分配 `ClassLoader`。**
 
 ##### [AOP的底层实现原理](https://www.cnblogs.com/shoshana-kong/p/9042102.html)
 
-​		`Spring`的`AOP`实现原理其实很简单，就是通过**动态代理**实现的。如果我们为`Spring`的某个`bean`配置了切面，那么`Spring`在创建这个`bean`的时候，实际上创建的是这个`bean`的一个代理对象，我们后续对`bean`中方法的调用，实际上调用的是代理类重写的代理方法。而`Spring`的`AOP`使用了两种动态代理，分别是**JDK的动态代理**，以及**CGLib的动态代理**。
+​		`Spring`的`AOP`实现原理其实很简单，就是通过**动态代理**实现的。如果我们为`Spring`的某个`bean`配置了切面，那么`Spring`在创建这个`bean`的时候，实际上创建的是这个`bean`的一个代理对象，我们后续对`bean`中方法的调用，实际上调用的是代理类重写的代理方法。而`Spring`的`AOP`使用了两种动态代理，分别是**JDK动态代理**，以及**CGLib动态代理**。
 
 ###### JDK动态代理
 
 **底层原理**
 
-​		`JDK`的动态代理是基于**反射**实现的。`JDK`通过反射，生成一个代理类，这个代理类实现了原来那个类的全部接口，并对接口中定义的所有方法进行了代理。当我们通过代理对象执行原来那个类的方法时，代理类底层会通过反射机制，回调我们实现的`InvocationHandler`接口的`invoke`方法。**并且这个代理类是Proxy类的子类**（记住这个结论，后面测试要用）。这就是`JDK`动态代理大致的实现方式。
+​		`JDK`的动态代理是基于**反射** 实现的。`JDK`通过反射，生成一个代理类，这个代理类实现了原来那个类的全部接口，并对接口中定义的所有方法进行了代理。当我们通过代理对象执行原来那个类的方法时，代理类底层会通过反射机制，回调我们实现的`InvocationHandler`接口的`invoke`方法。**并且这个代理类是Proxy类的子类**（记住这个结论，后面测试要用）。这就是`JDK`动态代理大致的实现方式。
 
 ```markdown
 **
@@ -557,11 +557,12 @@ protected Object createProxy(
 
 ##### Spring 中的 bean 的线程安全问题
 
-Spring容器本身并没有提供Bean的线程安全策略，因此可以说Spring容器中的Bean本身不具备线程安全的特性，但是具体情况还是要结合Bean的作用域来讨论。
+Spring容器本身并没有提供`Bean`的线程安全策略，因此可以说Spring容器中的Bean本身不具备线程安全的特性，但是具体情况还是要结合`Bean`的作用域来讨论。
 
-（1）对于 `prototype` 作用域的Bean，每次都创建一个新对象，也就是线程之间不存在Bean共享，因此不会有线程安全问题。
+1. 对于 `prototype` 作用域的Bean，每次都创建一个新对象，也就是线程之间不存在Bean共享，因此不会有线程安全问题。
 
-（2）对于 `singleton` 作用域的Bean，所有的线程都共享一个**单例实例的Bean，因此是存在线程安全问题的**。如果单例Bean, 是一个**无状态Bean**，也就是线程中的操作不会对Bean的成员执行**查询**以外的操作，那么这个**单例Bean是线程安全**的。比如Spring mvc 的 Controller、Service、Dao等，这些Bean大多是无状态的，只关注于方法本身。
+2. 对于 `singleton` 作用域的 `Bean`，所有的线程都共享一个**单例实例的 `Bean`，因此是存在线程安全问题的**。如果单例 `Bean`, 是一个**无状态 `Bean`**，也就是线程中的操作不会对`Bean`的成员执行**查询**以外的操作，那么这个**单例`Bean`是线程安全**的。比如Spring mvc 的 Controller、Service、Dao等，这些`Bean`大多是无状态的，只关注于方法本身。
+
 
 > 有状态Bean(Stateful Bean) ：就是**有实例变量**的对象，**可以保存数据**，是非线程安全的。
 >
@@ -1192,7 +1193,7 @@ Spring MVC 的简单原理图如下：
 ```markdown
 **
 1. 拦截器是基于java的反射机制的，而过滤器是基于函数回调。
-2. 拦截器不依赖与servlet容器，过滤器依赖与servlet容器。
+2. 拦截器不依赖servlet容器，过滤器依赖servlet容器。
 3. 拦截器只能对action请求起作用，而过滤器则可以对几乎所有的请求起作用。
 4. 拦截器可以访问action上下文、值栈里的对象，而过滤器不能访问。
 5. 在action的生命周期中，拦截器可以多次被调用，而过滤器只能在容器初始化时被调用一次。
@@ -1204,7 +1205,7 @@ Spring MVC 的简单原理图如下：
 
 > 拦截器的概念 
 
-java里的拦截器是动态拦截Action调用的对象，它提供了一种机制可以使开发者在一个Action执行的前后执行一段代码，也可以在一个Action执行前阻止其执行，同时也提供了一种可以提取Action中可重用部分代码的方式。在AOP中，拦截器用于在某个方法或者字段被访问之前进行拦截，然后在之前或者之后加入某些操作。
+Spring 里的拦截器是 **动态拦截Action调用的对象**，它提供了一种机制可以使开发者在一个Action执行的前后执行一段代码，也可以在一个Action执行前阻止其执行，同时也提供了一种可以提取Action中可重用部分代码的方式。在AOP中，拦截器用于在某个方法或者字段被访问之前进行拦截，然后在之前或者之后加入某些操作。
 
 > 拦截器的原理
 
@@ -1261,7 +1262,7 @@ java里的拦截器是动态拦截Action调用的对象，它提供了一种机�
 
 > Filter的概念
 
-Filter也称之为过滤器，它是Servlet技术中最激动人心的技术之一，WEB开发人员通过Filter技术，对web服务器管理的所有web资源：例如Jsp, Servlet, 静态图片文件或静态html文件等进行拦截，从而实现一些特殊的功能。例如实现URL级别的权限访问控制、过滤敏感词汇、压缩响应信息等一些高级功能。
+Filter也称之为过滤器，它是Servlet技术中最激动人心的技术之一，WEB开发人员通过Filter技术，**对web服务器管理的所有web资源：例如Jsp, Servlet, 静态图片文件或静态html文件等进行拦截，从而实现一些特殊的功能。**例如实现URL级别的权限访问控制、过滤敏感词汇、压缩响应信息等一些高级功能。
 
 > Filter的工作原理
 
@@ -1305,7 +1306,7 @@ web服务器在调用 `doFilter` 方法时，会传递一个`filterChain`对象�
 
 ###### 监听器(Listener)
 
-现在来说说 `Servlet` 的监听器 `Listener`，它是实现了 `javax.servlet.ServletContextListener` 接口的服务器端程序，它也是**随web应用的启动而启动，只初始化一次**，随web应用的停止而销毁。主要作用是：做一些初始化的内容添加工作、设置一些基本的内容、比如一些参数或者是一些固定的对象等等。首先来看一下 `ServletContextListener` 接口的源代码:
+现在来说说 `Servlet` 的监听器 `Listener`，它是实现了 `javax.servlet.ServletContextListener` 接口的服务器端程序，它也是**随web应用的启动而启动，只初始化一次**，随 `web` 应用的停止而销毁。主要作用是：做一些初始化的内容添加工作、设置一些基本的内容、比如一些参数或者是一些固定的对象等等。首先来看一下 `ServletContextListener` 接口的源代码:
 
 ```java
 public abstract interface ServletContextListener extends EventListener{
@@ -1364,8 +1365,6 @@ public class ListenerTest implements ServletContextListener{
 
 https://www.cnblogs.com/bigsai/p/14099154.html
 
-
-
 **************
 
 #### Spring 事务
@@ -1376,11 +1375,10 @@ https://www.cnblogs.com/bigsai/p/14099154.html
 - 首先对于使用了 `@Transactional` 注解的 `Bean`，`Spring` 会创建一个代理对象作为 `Bean`。
 - 当调⽤代理对象的⽅法时，会先判断该⽅法上是否加了 `@Transactional` 注解
 - 如果加了，那么则利⽤事务管理器创建⼀个数据库连接。
-- 并且修改数据库连接的 `autocommit` 属性为 `false`，禁⽌此连接的⾃动提交，这是实现 `Spring` 事务⾮常重
-  要的⼀步.
+- 并且修改数据库连接的 `autocommit` 属性为 `false`，禁⽌此连接的⾃动提交，这是实现 `Spring` 事务⾮常重要的⼀步。
 - 然后执⾏当前⽅法，⽅法中会执⾏ `sql`
-- 执⾏完当前⽅法后，如果没有出现异常就直接提交事务
-- 如果出现了异常，并且这个异常是需要回滚的就会回滚事务，否则仍然提交事务
+  - 执⾏完当前⽅法后，如果没有出现异常就直接提交事务
+  - 如果出现了异常，并且这个异常是需要回滚的就会回滚事务，否则仍然提交事务
 - `Spring` 事务的隔离级别默认对应的就是数据库的隔离级别
 - `Spring` 事务的传播机制是 `Spring` 事务⾃⼰实现的，也是 `Spring` 事务中最复杂的
 - `Spring` 事务的传播机制是基于数据库连接来做的，⼀个数据库连接⼀个事务，如果传播机制配置为需要新开⼀个事务，那么实际上就是先建⽴⼀个数据库连接，在此新数据库连接上执⾏ `sql`
@@ -1397,7 +1395,7 @@ https://www.cnblogs.com/bigsai/p/14099154.html
 
 针对哪些异常回滚事务是可以配置的，可以利用  `@Transactional` 注解中的 `rollbackFor` 属性进行配置，默认情况下会对 `RuntimeException` 和 `Error` 进行回滚。
 
-
+> spring事务只对运行时异常奏效，编译时异常Exception是不会回滚的。
 
 ##### 3、Spring 事务中的隔离级别有哪⼏种?
 
@@ -1413,7 +1411,7 @@ https://www.cnblogs.com/bigsai/p/14099154.html
 
 ```java
 /**
-方法A是一个事务的方法，方法A执行过程中调用了方法B，那么方法B有无事务以及方法B对事务的要求不同都会对方法A的事务具体执行造成影响，同时方法A的事务对方法B的事务的执行也有影响，这种影响具体是什么就由两个方法所定义的事务传播类型所决定。
+方法 A 是一个事务的方法，方法A执行过程中调用了方法B，那么方法B有无事务以及方法B对事务的要求不同都会对方法A的事务具体执行造成影响，同时方法A的事务对方法B的事务的执行也有影响，这种影响具体是什么就由两个方法所定义的事务传播类型所决定。
 */
 ```
 
@@ -1421,19 +1419,176 @@ https://www.cnblogs.com/bigsai/p/14099154.html
 
 **支持当前事务的情况：**
 
-- **TransactionDefinition.PROPAGATION_`REQUIRED`：**如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。默认选择。
+- **TransactionDefinition.PROPAGATION_`REQUIRED`：**如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。**默认选择**。
 - **TransactionDefinition.PROPAGATION_`SUPPORTS`：**如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
 - **TransactionDefinition.PROPAGATION_`MANDATORY`：**如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。（`mandatory`：强制性）
 
 **不支持当前事务的情况：**
 
-- **TransactionDefinition.PROPAGATION_`REQUIRES_NEW`：**不管是否存在事务，都创建一个新的事务，如果当前存在事务，则把当前事务挂起，新的执行完毕，继续执行老的事务。
+- **TransactionDefinition.PROPAGATION_`REQUIRES_NEW`：**不管是否存在事务，都创建一个新的事务：如果当前存在事务，则把当前事务挂起，新的执行完毕，继续执行老的事务。
 - **TransactionDefinition.PROPAGATION_`NOT_SUPPORTED`：**以非事务方式运行，如果当前存在事务，则把当前事务挂起。
 - **TransactionDefinition.PROPAGATION_`NEVER`：**以非事务方式运行，如果当前存在事务，则抛出异常。
 
 **其他情况：**
 
 - **TransactionDefinition.PROPAGATION_`NESTED`：**如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_`REQUIRED`。
+
+> 以下是例子+具体说明
+
+- `@Transactional(propagation = Propagation.REQUIRED)`
+
+  - ```java
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        throw Exception;     //发生异常抛出
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - **数据库没有插入新的数据，数据库还是保持着执行 `testMain` 方法之前的状态，没有发生改变。**`testMain`上声明了事务，在执行 `testB` 方法时就加入了 `testMain` 的事务（**当前存在事务，则加入这个事务**），在执行 `testB` 方法抛出异常后事务会发生回滚，又 `testMain` 和 `testB` 使用的同一个事务，所以事务回滚后 `testMain` 和 `testB` 中的操作都会回滚，也就使得数据库仍然保持初始状态。
+
+  - ```java
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        throw Exception;     //发生异常抛出
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - **数据 `a1` 存储成功，数据 `b1` 和 `b2` 没有存储**。由于testMain没有声明事务，testB有声明事务且传播行为是REQUIRED，所以在执行testB时会自己新建一个事务（**如果当前没有事务，则自己新建一个事务**），testB抛出异常则只有testB中的操作发生了回滚，也就是b1的存储会发生回滚，但a1数据不会回滚，所以最终a1数据存储成功，b1和b2数据没有存储。
+
+- `@Transactional(propagation = Propagation.SUPPORTS)`
+
+  - ```java
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        throw Exception;     //发生异常抛出
+        B(b2);  //调用B入参b2
+    
+    ```
+
+  - 这种情况下，执行 `testMain` 的最终结果就是，`a1，b1` 存入数据库，`b2` 没有存入数据库。由于`testMain` 没有声明事务，且 `testB` 的事务传播行为是 `SUPPORTS`，所以执行 `testB` 时就是没有事务的（**如果当前没有事务，就以非事务方法执行**），则在 `testB` 抛出异常时也不会发生回滚，所以最终结果就是 `a1` 和 `b1` 存储成功，`b2` 没有存储。
+
+  - 那么当我们在 `testMain` 上声明事务且使用 `REQUIRED` 传播方式的时候，这个时候执行 `testB` 就满足**当前存在事务，则加入当前事务**，在 `testB` 抛出异常时事务就会回滚，最终结果就是 `a1，b1` 和 `b2` 都不会存储到数据库。
+
+- `@Transactional(propagation = Propagation.MANDATORY)`
+
+  - ```java
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        throw Exception;     //发生异常抛出
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - 这种情形的执行结果就是 `a1` 存储成功，而 `b1` 和 `b2` 没有存储。`b1` 和 `b2` 没有存储，并不是事务回滚的原因，而是因为 `testMain` 方法没有声明事务，在去执行 `testB` 方法时就直接抛出事务要求的异常（**如果当前事务不存在，则抛出异常**），所以 `testB` 方法里的内容就没有执行。
+
+  - 那么如果在 `testMain` 方法进行事务声明，并且设置为 `REQUIRED`，则执行 `testB` 时就会使用 `testMain`已经开启的事务，遇到异常就正常的回滚了。
+
+- `@Transactional(propagation = Propagation.REQUIRED)`
+
+  - ```java
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+        throw Exception;     //发生异常抛出
+    }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - 这种情形的执行结果就是 `a1` 没有存储，而 `b1` 和 `b2` 存储成功，因为 `testB` 的事务传播设置为`REQUIRES_NEW` ,所以在执行 `testB` 时会开启一个新的事务，`testMain` 中发生的异常时在 `testMain` 所开启的事务中，所以这个异常不会影响 `testB` 的事务提交，`testMain` 中的事务会发生回滚，所以最终 `a1` 就没有存储，而 `b1` 和 `b2` 就存储成功了。
+
+  - 如果 `testMain` 和 `testB` 都设置为 `REQUIRED`，那么上面的代码执行结果就是所有数据都不会存储，因为 `testMain` 和 `testB` 是在同一个事务下的，所以事务发生回滚时，所有的数据都会回滚
+
+- `@Transactional(propagation = Propagation.REQUIRED)`
+
+  - 可以理解为设置事务传播类型为 `NOT_SUPPORTED` 的方法，在执行时，不论当前是否存在事务，都会以非事务的方式运行。
+
+  - ```java
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        throw Exception;     //发生异常抛出
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - 该场景的执行结果就是 `a1` 和 `b2` 没有存储，而 `b1` 存储成功。`testMain` 有事务，而 `testB` 不使用事务，所以执行中 `testB` 的存储 `b1` 成功，然后抛出异常，此时 `testMain` 检测到异常事务发生回滚，但是由于 `testB` 不在事务中，所以只有 `testMain` 的存储 `a1` 发生了回滚，最终只有 `b1` 存储成功，而 `a1` 和 `b1` 都没有存储。
+
+- `@Transactional(propagation = Propagation.NEVER)`
+
+  - ```java
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+    }
+    @Transactional(propagation = Propagation.NEVER)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - 该场景执行，直接抛出事务异常，且不会有数据存储到数据库。由于 `testMain` 事务传播类型为`REQUIRED`，所以 `testMain` 是运行在事务中，而 `testB` 事务传播类型为 `NEVER`，所以 `testB` 不会执行而是直接抛出事务异常，此时 `testMain` 检测到异常就发生了回滚，所以最终数据库不会有数据存入。
+
+- `@Transactional(propagation = Propagation.NESTED)`
+
+  - 和 `REQUIRES_NEW` 的区别
+
+    - > `REQUIRES_NEW` 是新建一个事务并且新开启的这个事务与原有事务无关，而NESTED则是当前存在事务时（我们把当前事务称之为父事务）会开启一个嵌套事务（称之为一个子事务）。
+      > 在 `NESTED` 情况下父事务回滚时，子事务也会回滚，而在 `REQUIRES_NEW` 情况下，原有事务回滚，不会影响新开启的事务。
+
+  - 和 `REQUIRED` 的区别
+
+    - > `REQUIRED` 情况下，调用方存在事务时，则被调用方和调用方使用同一事务，那么被调用方出现异常时，由于共用一个事务，所以无论调用方是否 `catch` 其异常，事务都会回滚，而在 `NESTED` 情况下，被调用方发生异常时，调用方可以 `catch` 其异常，这样只有子事务回滚，父事务不受影响。
+
+  - ```java
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void testMain(){
+        A(a1);  //调用A入参a1
+        testB();    //调用testB
+        throw Exception;     //发生异常抛出
+    }
+    @Transactional(propagation = Propagation.NESTED)
+    public void testB(){
+        B(b1);  //调用B入参b1
+        B(b2);  //调用B入参b2
+    }
+    ```
+
+  - 该场景下，所有数据都不会存入数据库，因为在 `testMain` 发生异常时，父事务回滚则子事务也跟着回滚。
 
 ##### 5、@Transactional实现的原理
 
@@ -1451,7 +1606,7 @@ Spring事务注解是个典型的Spring AOP的注解。方法上面加上 `@Tran
 
 
 
-在配置 `@Transactional`  注解以后，`spring` 会在 `ioc` 容器创建一个**BeanFactoryTransactionAttributeSourceAdvisor实例，这个实例可以看作是一个切点, 在判断一个bean在初始化过程中是否需要创建代理对象，都需要验证一次BeanFactoryTransactionAttributeSourceAdvisor是否是适用这个bean的切点。如果是，就需要创建代理对象，并且把BeanFactoryTransactionAttributeSourceAdvisor实例注入到代理对象中。**
+在配置 `@Transactional`  注解以后，`spring` 会在 `IOC` 容器创建一个**BeanFactoryTransactionAttributeSourceAdvisor实例，这个实例可以看作是一个切点, 在判断一个bean在初始化过程中是否需要创建代理对象，都需要验证一次BeanFactoryTransactionAttributeSourceAdvisor是否是适用这个bean的切点。如果是，就需要创建代理对象，并且把BeanFactoryTransactionAttributeSourceAdvisor实例注入到代理对象中。**
 
 有一个 `parseTransactionAnnotation` 方法，判断是否需要根据 `@Transactional` 进行代理对象创建的判断过程。`@Transactional` 的作用一个就是标识方法需要被代理，一个就是携带事务管理需要的一些属性信息。
 

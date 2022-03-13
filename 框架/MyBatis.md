@@ -110,3 +110,45 @@
 ```
 
 ![image-20210625212144347](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/image-20210625212144347.png)
+
+## 5. 一级缓存二级缓存
+
+### 5.1 一级缓存
+
+​		`Mybatis` 对缓存提供支持，但是在没有配置的默认情况下，它只开启一级缓存，一级缓存只是相对于同一个`SqlSession` 而言。所以在参数和 `SQL` 完全一样的情况下，我们使用同一个 `SqlSession` 对象调用一个 `Mapper` 方法，往往只执行一次 `SQL` ，因为使用 `SelSession` 第一次查询后，`MyBatis` 会将其放在缓存中，以后再查询的时候，如果没有声明需要刷新，并且缓存没有超时的情况下，`SqlSession` 都会取出当前缓存的数据，而不会再次发送 `SQL` 到数据库。
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/1254583-20171026214546023-1354746770.png)
+
+#### 5.1.1 一级缓存的生命周期有多长？
+
+1. `MyBatis` 在开启一个数据库会话时，会创建一个新的 `SqlSession` 对象，`SqlSession` 对象中会有一个新的 `Executor` 对象。`Executor` 对象中持有一个新的 `PerpetualCache` 对象；当会话结束时，`SqlSession` 对象及其内部的 `Executor` 对象还有 `PerpetualCache` 对象也一并释放掉。
+2. 如果 `SqlSession` 调用了 `close()` 方法，会释放掉一级缓存 `PerpetualCache` 对象，一级缓存将不可用。
+3. 如果 `SqlSession` 调用了 `clearCache()` ，会清空 `PerpetualCache` 对象中的数据，但是该对象仍可使用。
+4. `SqlSession`中执行了任何一个写操作(`update()、delete()、insert()`) ，都会清空 `PerpetualCache` 对象的数据，但是该对象可以继续使用。
+
+#### 5.1.2 怎么判断某两次查询是完全相同的查询？
+
+　　`Mybatis` 认为，对于两次查询，如果以下条件都完全一样，那么就认为它们是完全相同的两次查询。
+
+-  传入的 `statementId` 
+- 查询时要求的结果集中的结果范围
+- 这次查询所产生的最终要传递给 `JDBC java.sql.Preparedstatement` 的 `Sql` 语句字符串（boundSql.getSql() ）
+- 传递给 `java.sql.Statement` 要设置的参数值
+
+
+
+### 5.2 二级缓存
+
+`MyBatis` 的二级缓存是 `Application` 级别的缓存，它可以提高对数据库查询的效率，以提高应用的性能。
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/1254583-20171029185910164-1823278112.png)
+
+`SqlSessionFactory` 层面上的二级缓存默认是不开启的，二级缓存的开启需要进行配置，实现二级缓存的时候，`MyBatis` 要求返回的 `POJO` 必须是可序列化的。 也就是要求实现 `Serializable` 接口，配置方法很简单，只需要在映射 `XML` 文件配置就可以开启缓存了 `<cache/>`，如果我们配置了二级缓存就意味着：
+
+- 映射语句文件中的所有 `select` 语句将会被缓存。
+- 映射语句文件中的所欲 `insert`、`update`和`delete`语句会刷新缓存。
+- 缓存会使用默认的 `Least Recently Used(LRU, 最近最少使用的)`算法来收回。
+- 根据时间表，比如 `No Flush Interval`,（CNFI没有刷新间隔），缓存不会以任何时间顺序来刷新。
+- 缓存会存储列表集合或对象(无论查询方法返回什么)的1024个引用
+- 缓存会被视为是 `read/write` (可读/可写)的缓存，意味着对象检索不是共享的，而且可以安全的被调用者修改，不干扰其他调用者或线程所做的潜在修改。
+
