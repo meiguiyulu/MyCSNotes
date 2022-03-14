@@ -52,11 +52,11 @@
 
 ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20180612135157564)
 
-Map接口有三个比较重要的实现类，分别是HashMap、TreeMap和HashTable。
+Map接口有三个比较重要的实现类，分别是 `HashMap`、`TreeMap`和 `HashTable`。
 
-TreeMap是有序的，HashMap和HashTable是无序的。==**HashMap散列图、HashTable散列表是按“有利于随机查找的散列(hash)的顺序”排列的。并非按输入顺序。遍历时只能全部输出，而没有顺序**==。甚至可以rehash()重新散列，来获得更利于随机存取的内部顺序。
+`TreeMap` 是有序的，`HashMap` 和 `HashTable是` 无序的。==**HashMap散列图、HashTable散列表是按“有利于随机查找的散列(hash)的顺序”排列的。并非按输入顺序。遍历时只能全部输出，而没有顺序**==。甚至可以rehash()重新散列，来获得更利于随机存取的内部顺序。
 
-> ==TreeMap是按键排序的，LinkedHashMap(LinkedHaseSet)是按插入顺序排队的。==
+> ==`TreeMap`是按键排序的，`LinkedHashMap(LinkedHashSet)`是按插入顺序排队的。==
 
 **Hashtable的方法是同步的，HashMap的方法不是同步的。这是两者最主要的区别。**
 
@@ -492,8 +492,10 @@ public class Test {
 1. **线程是否安全：HashMap是非线程安全的，HashTable是线程安全的，因为HashTable内部的方法基本都经过synchronized修饰。**(如果你要保证线程安全的话就使用ConcurrentHashMap吧！)；
 2. **效率：**因为线程安全的问题，HashMap要比HashTable效率高一点。另外，**HashTable基本被淘汰，不要在代码中使用它**；
 3. **对Null key和Null value的支持**：**HashMap可以存储null的key和value，但null作为键只能有一个，null作为值可以有多个；HashTable不允许有null 键和null值**，否则会抛出NullPointerException。
-4. **初始容量大小和每次扩充容量大小的不同**：①创建时如果不指定容量初始值，**Hashtable默认的初始大小为11，之后每次扩充，容量变为原来的2n+1。HashMap默认的初始化大小为16。之后每次扩充，容量变为原来的2倍**。②创建时如果给定了容量初始值，那么Hashtable会直接使用你给定的大小，而HashMap会将其扩充为2的幂次方大小(HashMap中的`tableSizeFor()`方法保证，下面给出了源代码)。也就是说**HashMap总是使用2的幂作为哈希表的大小**，后面会介绍到为什么是2的幂次方。
-5. **底层数据结构：**JDK1.8以后的HashMap在解决哈希冲突时有了较大的变化，**当链表长度大于阈值(默认为8)(将链表转换成红黑树前会判断，如果当前数组的长度小于64，那么会选择先进行数组扩容，而不是转换为红黑树)时，将链表转化为红黑树，以减少搜索时间。Hashtable 没有这样的机制，底层实现是数组+链表。**
+4. **初始容量大小和每次扩充容量大小的不同**：
+   1. 创建时如果不指定容量初始值，**Hashtable默认的初始大小为11，之后每次扩充，容量变为原来的2n+1。HashMap默认的初始化大小为16。之后每次扩充，容量变为原来的2倍**。
+   2. 创建时如果给定了容量初始值，那么 `Hashtable` 会直接使用你给定的大小，而 `HashMap` 会将其扩充为2的幂次方大小( `HashMap` 中的`tableSizeFor()`方法保证)。也就是说**HashMap总是使用2的幂作为哈希表的大小**。
+5. **底层数据结构：**JDK1.8以后的 `HashMap` 在解决哈希冲突时有了较大的变化，**当链表长度大于阈值(默认为8)(将链表转换成红黑树前会判断，如果当前数组的长度小于64，那么会选择先进行数组扩容，而不是转换为红黑树)时，将链表转化为红黑树，以减少搜索时间。`Hashtable` 没有这样的机制，底层实现是数组+链表。**
 
 ************
 
@@ -858,7 +860,7 @@ JDK 1.8以后，在解决哈希冲突时有了较大的变化，当**链表长�
 
 ##### 3、HashMap的长度为什么是2的幂次方
 
-​	`HashMap` 为了存取高效，要尽量较少碰撞，就是要尽量把数据分配均匀，每个链表长度大致相同，这个实现就是把数据存到哪个链表中的算法。即取模运算，`hash%length`，计算机中直接求余效率不如位运算，源码中做了优化`hash&(length-1)`，`hash%length==hash&(length-1)`的前提是 `length` 是 `2` 的n次方；这也就解释了 `HashMap` 的长度为什么是 `2` 的幂次方。
+​	`HashMap` 为了存取高效，要尽量较少碰撞，就是要尽量把数据分配均匀，每个链表长度大致相同，这个实现就是把数据存到哪个链表中的算法。即取模运算，`hash%length`，计算机中直接求余效率不如位运算，源码中做了优化`hash&(length-1)`，`hash%length==hash&(length-1)`的前提是 `length` 是 `2` 的 `n` 次方；这也就解释了 `HashMap` 的长度为什么是 `2` 的幂次方。
 
 ##### 4、HashMap多线程操作导致死循环
 
@@ -898,6 +900,12 @@ static final int hash(Object key) {
 ##### 7、HaseMap Resize
 
 **JDK 1.7以前**
+
+1. 判断扩容前数组大小是否超过阈值
+   1. 如果超过，不再扩容
+   2. 没有超过，容量加倍
+2. 初始化新的数组，将原数组内的数据转移到新的数组中
+   1. 重新计算 `hash` 值。
 
 **`Resize()`**
 
@@ -944,8 +952,11 @@ static final int hash(Object key) {
 
 > ```java
 > static int indexFor(int h, int length) {
->     return h & (length - 1);
+>  return h & (length - 1);
 > }
+> /*
+>  `HashMap` 为了存取高效，要尽量较少碰撞，就是要尽量把数据分配均匀，每个链表长度大致相同，这个实现就是把数据存到哪个链表中的算法。即取模运算，`hash%length`，计算机中直接求余效率不如位运算，源码中做了优化`hash&(length-1)`，`hash%length==hash&(length-1)`的前提是 `length` 是 `2` 的 `n` 次方；这也就解释了 `HashMap` 的长度为什么是 `2` 的幂次方。
+> */
 > ```
 
 
@@ -954,108 +965,109 @@ static final int hash(Object key) {
 
 > **经过rehash之后，元素的位置要么是在原位置，要么是在原位置再移动2次幂的位置**。
 >
-> `length * 2`，即新增的 `bit` 位是1，在 `(n - 1) & hash` 时，只需要判断新增加的这一个bit位，如果是0的话，说明索引不变，如果变成1了，索引变成 原索引+扩容前的容量大小
->
+> `length * 2`，即新增的 `bit` 位是1，在 `(n - 1) & hash` 时，只需要判断新增加的这一个bit位，如果是0的话，说明索引不变，如果变成1了，索引变成 `原索引+扩容前的容量大小`。
+
+1. 如果 `table == null` , 则为 `HashMap` 的初始化, 生成空 `table` 返回即可;
+2. 如果 `table` 不为空, 需要重新计算 `table` 的长度, `newLength = oldLength << 1` (注, 如果原 `oldLength` 已经到了上限, 则 `newLength = oldLength`); 
+3. 遍历 `oldTable`:
+   1. 首节点为空, 本次循环结束;
+   2. 无后续节点, 重新计算 `hash` 位, 本次循环结束;
+   3. 当前是红黑树, 走红黑树的重定位;
+   4. 当前是链表, 1.7 时还需要重新计算 `hash` 位, 但是 1.8 做了优化, 通过$ (e.hash \& oldCap) == 0$ 来判断是否需要移位；如果为真则在原位不动, 否则则需要移动到 **`当前hash槽位 + oldCap`** 的位置;
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20170123110634173)
+
+元素在重新计算 `hash` 之后，因为 n 变为2倍，那么 `n-1` 的 `mask` 范围在高位多 `1bit` (红色)，因此新的 `index`就会发生这样的变化：
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20170123110716285)
+
+因此，我们在扩充HashMap的时候，不需要像JDK1.7的实现那样重新计算hash，只需要看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。
+
 > ```java
 > final Node<K,V>[] resize() {
->  Node<K,V>[] oldTab = table;
->  int oldCap = (oldTab == null) ? 0 : oldTab.length;
->  int oldThr = threshold;
->  int newCap, newThr = 0;
->  if (oldCap > 0) {
->      // 超过最大值就不再扩充了，就只好随你碰撞去吧
->      if (oldCap >= MAXIMUM_CAPACITY) {
->          threshold = Integer.MAX_VALUE;
->          return oldTab;
->      }
->      // 没超过最大值，就扩充为原来的2倍
->      else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
->                oldCap >= DEFAULT_INITIAL_CAPACITY)
->           newThr = oldThr << 1; // double threshold
+> Node<K,V>[] oldTab = table;
+> int oldCap = (oldTab == null) ? 0 : oldTab.length;
+> int oldThr = threshold;
+> int newCap, newThr = 0;
+> if (oldCap > 0) {
+>   // 超过最大值就不再扩充了，就只好随你碰撞去吧
+>   if (oldCap >= MAXIMUM_CAPACITY) {
+>       threshold = Integer.MAX_VALUE;
+>       return oldTab;
 >   }
->   else if (oldThr > 0) // initial capacity was placed in threshold
->       newCap = oldThr;
->   else {               // zero initial threshold signifies using defaults
->       newCap = DEFAULT_INITIAL_CAPACITY;
->       newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
->   }
->   // 计算新的resize上限
->   if (newThr == 0) {
+>   // 没超过最大值，就扩充为原来的2倍
+>   else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
+>             oldCap >= DEFAULT_INITIAL_CAPACITY)
+>        newThr = oldThr << 1; // double threshold
+> }
+> else if (oldThr > 0) // initial capacity was placed in threshold
+>    newCap = oldThr;
+> else {               // zero initial threshold signifies using defaults
+>    newCap = DEFAULT_INITIAL_CAPACITY;
+>    newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+> }
+> // 计算新的resize上限
+> if (newThr == 0) {
 > 
->       float ft = (float)newCap * loadFactor;
->       newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
->                 (int)ft : Integer.MAX_VALUE);
+>    float ft = (float)newCap * loadFactor;
+>    newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
+>              (int)ft : Integer.MAX_VALUE);
+> }
+> threshold = newThr;
+> @SuppressWarnings({"rawtypes"，"unchecked"})
+>    Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+> table = newTab;
+> if (oldTab != null) {
+>   // 把每个bucket都移动到新的buckets中
+>   for (int j = 0; j < oldCap; ++j) {
+>       Node<K,V> e;
+>       if ((e = oldTab[j]) != null) {
+>           oldTab[j] = null;
+>           if (e.next == null)
+>               newTab[e.hash & (newCap - 1)] = e;
+>           else if (e instanceof TreeNode) //如果是红黑树节点
+>               ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+>           else { // 链表优化重hash的代码块
+>               Node<K,V> loHead = null, loTail = null;
+>               Node<K,V> hiHead = null, hiTail = null;
+>               Node<K,V> next;
+>               do {
+>                   next = e.next;
+>                   // 原索引
+>                   if ((e.hash & oldCap) == 0) {
+>                       if (loTail == null)
+>                           loHead = e;
+>                       else
+>                           loTail.next = e;
+>                       loTail = e;
+>                   }
+>                   // 原索引+oldCap
+>                   else {
+>                       if (hiTail == null)
+>                           hiHead = e;
+>                       else
+>                           hiTail.next = e;
+>                       hiTail = e;
+>                   }
+>               } while ((e = next) != null);
+>               // 原索引放到bucket里
+>               if (loTail != null) {
+>                   loTail.next = null;
+>                   newTab[j] = loHead;
+>               }
+>               // 原索引+oldCap放到bucket里
+>               if (hiTail != null) {
+>                   hiTail.next = null;
+>                   newTab[j + oldCap] = hiHead;
+>               }
+>           }
+>       }
 >   }
->   threshold = newThr;
->   @SuppressWarnings({"rawtypes"，"unchecked"})
->       Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
->  table = newTab;
->  if (oldTab != null) {
->      // 把每个bucket都移动到新的buckets中
->      for (int j = 0; j < oldCap; ++j) {
->          Node<K,V> e;
->          if ((e = oldTab[j]) != null) {
->              oldTab[j] = null;
->              if (e.next == null)
->                  newTab[e.hash & (newCap - 1)] = e;
->              else if (e instanceof TreeNode) //如果是红黑树节点
->                  ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
->              else { // 链表优化重hash的代码块
->                  Node<K,V> loHead = null, loTail = null;
->                  Node<K,V> hiHead = null, hiTail = null;
->                  Node<K,V> next;
->                  do {
->                      next = e.next;
->                      // 原索引
->                      if ((e.hash & oldCap) == 0) {
->                          if (loTail == null)
->                              loHead = e;
->                          else
->                              loTail.next = e;
->                          loTail = e;
->                      }
->                      // 原索引+oldCap
->                      else {
->                          if (hiTail == null)
->                              hiHead = e;
->                          else
->                              hiTail.next = e;
->                          hiTail = e;
->                      }
->                  } while ((e = next) != null);
->                  // 原索引放到bucket里
->                  if (loTail != null) {
->                      loTail.next = null;
->                      newTab[j] = loHead;
->                  }
->                  // 原索引+oldCap放到bucket里
->                  if (hiTail != null) {
->                      hiTail.next = null;
->                      newTab[j + oldCap] = hiHead;
->                  }
->              }
->          }
->      }
->  }
->  return newTab;
+> }
+> return newTab;
 > }
 > ```
 >
-> 1 如果 `table == null` , 则为HashMap的初始化, 生成空table返回即可;
-> 2 如果 `table` 不为空, 需要重新计算 `table` 的长度, `newLength = oldLength << 1` (注, 如果原 `oldLength` 已经到了上限, 则 `newLength = oldLength`); 
-> 3 遍历 `oldTable`:
-> 	3.2 首节点为空, 本次循环结束;
-> 	3.1 无后续节点, 重新计算 `hash` 位, 本次循环结束;
-> 	3.2 当前是红黑树, 走红黑树的重定位;
-> 	3.3 当前是链表, JAVA7时还需要重新计算hash位, 但是JAVA8做了优化, 通过$ (e.hash \& oldCap) == 0$ 来判断是否需要移位; 如果为真则在原位不动, 否则则需要移动到当前hash槽位 + oldCap的位置;
->
-> ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20170123110634173)
->
-> 元素在重新计算 `hash` 之后，因为 n 变为2倍，那么n-1的mask范围在高位多1bit(红色)，因此新的index就会发生这样的变化：
->
-> ![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/20170123110716285)
->
-> 因此，我们在扩充HashMap的时候，不需要像JDK1.7的实现那样重新计算hash，只需要看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。
 
 ##### 8、HaseMap Put
 

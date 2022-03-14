@@ -1,6 +1,6 @@
 ### Java基础
 
-#### 0、后端知识
+#### 0. 后端知识
 
 ##### 0.1、字符编码中ASCII、Unicode和UTF-8的区别
 
@@ -16,7 +16,7 @@
 
    为了解决上述问题，又出现了把Unicode编码转化为“可变长编码”UTF-8编码，UTF-8编码将Unicode字符按数字大小编码为1-6个字节，英文字母被编码成一个字节，常用汉字被编码成三个字节，如果你编译的文本是纯英文的，那么用UTF-8就会非常节省空间，并且ASCII码也是UTF-8的一部分。
 
-#### 1、面向对象和面向过程的区别
+#### 1. 面向对象和面向过程的区别
 
 - **面向过程：性能比面向对象高**。因为类调用的时候需要实例化，开销比较大，比较消耗资源，所以当性能是最重要的考量因素的时候，比如单片机、嵌入式开发、Linux/Unix等一般采用面向过程开发。但是，面向过程没有**面向对象易维护、易复用、易扩展。**
 - **面向对象：面向对象易维护、易复用、易扩展。**因为面向对象有封装、继承、多态性的特性，所以可以设计出低耦合的系统，使系统更加灵活、更加易于维护。但是，**面向对象性能比面向过程低。**
@@ -62,7 +62,7 @@ OpenJDK不包含其他的软件包，比如Rhino Java DB JAXP……，并且可�
 
 *********************
 
-#### 2、JVM
+#### 2. JVM
 
 Java虚拟机(JVM)是运行JVM字节码的虚拟机，JVM有针对不同的操作系统(Windows，Linux，macOS)的特定实现，目的是使用相同的字节码，他们都会给出相同的结果。具体可看[JVM](JVM/JVM.md)。
 
@@ -110,7 +110,7 @@ Java程序从源文件创建到程序运行要经过两大步骤：
 
 #### ==5、String、StringBuffer和StringBuilder==
 
-##### 1、String对象不可变
+##### 1. String对象不可变
 
 > String类中使用 **final** 关键字修饰，所以 String 对象不可变。
 >
@@ -147,7 +147,7 @@ Java程序从源文件创建到程序运行要经过两大步骤：
 
 > `StringBuffer`、`StringBuilder`是使用字符数组保存字符串 `byte[] value;`，但是没有`final`关键字修饰，所以这两种对象都是可变的。
 
-##### 2、线程安全性
+##### 2. 线程安全性
 
 > `String`对象是不可变的，也可以理解为常量，线程安全。
 >
@@ -155,11 +155,11 @@ Java程序从源文件创建到程序运行要经过两大步骤：
 >
 > `StringBuilder`并没有对方法加同步锁，所以是非线程安全的。
 
-##### 3、String和 StringBuilder 进行字符串拼接时的区别
+##### 3. String和 StringBuilder 进行字符串拼接时的区别
 
 ​		在做字符串拼接时, String是用 "+" 号进行字符串的拼接, 底层是先在堆内存中创建一个 `StringBuilder` 对象, 用来进行字符串拼接, 然后使用 `toString()` 方法把 `StringBuilder` 对象转换成 `String` 对象, 完成字符串的拼接;而 `StringBuilder` 则是直接进行拼接, 所以 `StringBuilder` 的拼接效率比 `String` 的效率高。
 
-##### 4、StringBuilder 底层
+##### 4. StringBuilder 底层
 
 底层实现是数组 ：`byte[] value;`。
 
@@ -179,7 +179,7 @@ private int newCapacity(int minCapacity) {
     }
 ```
 
-扩容的大小是新字符串的长度的2倍，然后再加上2。**为什么要加2呢？**
+扩容的大小是新字符串的长度的 `2` 倍，然后再加上 `2` 。**为什么要加2呢？**
 
 ```java
 /*
@@ -187,7 +187,7 @@ private int newCapacity(int minCapacity) {
 */
 ```
 
-##### 5、toString()、String.valueOf、(String)强转有什么区别？
+##### 5. toString()、String.valueOf、(String)强转有什么区别？
 
 - **基本类型**
   - **基本类型没有 `toString()`方法 **
@@ -476,7 +476,13 @@ public void doSomething(ArrayList list){
 
 *******************
 
-#### 10、Java基本数据类型与包装类类型的区别
+#### 10. Java基本数据类型与包装类类型的区别
+
+> 基本数据类型如下：
+
+![img](https://gitee.com/yun-xiaojie/blog-image/raw/master/img/1621332183313098.png)
+
+> 区别如下：
 
 - **声明方式的不同：**基本类型无需通过new关键字来创建，而封装类型需new关键字。
 

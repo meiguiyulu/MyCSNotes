@@ -1922,23 +1922,23 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 
 **相同点：**
 
-两者都可以写在字段和setter方法上。两者如果都写在字段上，那么就不需要再写setter方法。
+两者都可以写在字段和 `setter` 方法上。两者如果都写在字段上，那么就不需要再写 `setter`方法。
 
 **不同点：**
 
-- `@Autowired` 为Spring提供的注解，需要导入包 `org.springframework.beans.factory.annotation.Autowired`；`@Autowired` 注解是按照类型（`byType`）装配依赖对象，默认情况下它要求依赖对象必须存在，如果允许null值，可以设置它的required属性为false。如果我们想使用按照名称（byName）来装配，可以结合 `@Qualifier` 注解一起使用。
+- `@Autowired` 为Spring提供的注解，需要导入包 `org.springframework.beans.factory.annotation.Autowired`；`@Autowired` 注解是按照类型（`byType`）装配依赖对象，默认情况下它要求依赖对象必须存在，如果允许 `null` 值，可以设置它的`required` 属性为 `false`。如果我们想使用按照名称（byName）来装配，可以结合 `@Qualifier` 注解一起使用。
 
-- `@Resource` 默认按照 `ByName` 自动注入，由J2EE提供，需要导入包 `javax.annotation.Resource` 。`@Resource` 有两个重要的属性：name和type，而Spring将 `@Resource` 注解的 name属性解析为bean的名字，而type属性则解析为bean的类型。所以，如果使用name属性，则使用 `byName` 的自动注入策略，而使用type属性时则使用byType自动注入策略。如果既不制定name也不制定type属性，这时将通过反射机制使用 `byName` 自动注入策略。**注：最好是将``@Resource`放在setter方法上，因为这样更符合面向对象的思想，通过set、get去操作属性，而不是直接去操作属性**
+- `@Resource` 默认按照 `ByName` 自动注入，由J2EE提供，需要导入包 `javax.annotation.Resource` 。`@Resource` 有两个重要的属性：`name` 和 `type`，而Spring将 `@Resource` 注解的 name 属性解析为bean的名字，而type属性则解析为bean的类型。所以，如果使用name属性，则使用 `byName` 的自动注入策略，而使用type属性时则使用byType自动注入策略。如果既不制定name也不制定type属性，这时将通过反射机制使用 `byName` 自动注入策略。**注：最好是将`@Resource`放在setter方法上，因为这样更符合面向对象的思想，通过set、get去操作属性，而不是直接去操作属性**
 
   - `@Resource `装配顺序：
 
-    ①如果同时指定了name和type，则从Spring上下文中找到唯一匹配的bean进行装配，找不到则抛出异常。
+    ①如果同时指定了 `name` 和 `type` ，则从 `Spring` 上下文中找到唯一匹配的 `bean` 进行装配，找不到则抛出异常。
 
-    ②如果指定了name，则从上下文中查找名称（id）匹配的bean进行装配，找不到则抛出异常。
+    ②如果指定了 `name` ，则从上下文中查找名称（id）匹配的bean进行装配，找不到则抛出异常。
 
-    ③如果指定了type，则从上下文中找到类似匹配的唯一bean进行装配，找不到或是找到多个，都会抛出异常。
+    ③如果指定了 `type`，则从上下文中找到类似匹配的唯一bean进行装配，找不到或是找到多个，都会抛出异常。
 
-    ④如果既没有指定name，又没有指定type，则自动按照byName方式进行装配；如果没有匹配，则回退为一个原始类型进行匹配，如果匹配则自动装配。
+    ④如果既没有指定 `name` ，又没有指定 `type` ，则自动按照 `byName` 方式进行装配；如果没有匹配，则回退为一个原始类型进行匹配，如果匹配则自动装配。
 
 ##### @ControllerAdvice
 

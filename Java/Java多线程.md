@@ -1945,7 +1945,7 @@ Executors.ScheduledThreadPoolExecutor(); //创建一个定长线程池,支持定
 
 ###### **无界队列**
 
-队列大小无限制，常用的为无界的**`LinkedBlockingQueue`(队列容量为 Integer.MAX_VALUE)**，使用该队列做为阻塞队列时要尤其当心，当任务耗时较长时可能会导致**大量新任务在队列中堆积最终导致OOM**。阅读代码发现，`Executors.newFixedThreadPool` 采用就是 `LinkedBlockingQueue`，而楼主踩到的就是这个坑，当QPS很高，发送数据很大，大量的任务被添加到这个无界`LinkedBlockingQueue` 中，导致cpu和内存飙升服务器掉。
+队列大小无限制，常用的为无界的**`LinkedBlockingQueue`(队列容量为 Integer.MAX_VALUE)**，使用该队列做为阻塞队列时要尤其当心，当任务耗时较长时可能会导致**大量新任务在队列中堆积最终导致OOM**。阅读代码发现，`Executors.newFixedThreadPool` 采用就是 `LinkedBlockingQueue`，而楼主踩到的就是这个坑，当QPS很高，发送数据很大，大量的任务被添加到这个无界`LinkedBlockingQueue` 中，导致cpu和内存飙升服务器挂掉。
 
 ###### **有界队列**
 

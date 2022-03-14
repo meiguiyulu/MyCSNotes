@@ -338,8 +338,6 @@ public class Application {
       	}
     ```
 
-
-
 ## 2、Springboot怎么实现异常处理
 
 SpringBoot中有一个`ControllerAdvice`的注解，使用该注解**表示开启了全局异常的捕获**，我们只需再自定义一个方法使用`ExceptionHandler`注解，然后定义捕获异常的类型即可对这些捕获的异常进行统一的处理。
@@ -381,7 +379,6 @@ public @interface ControllerAdvice {
 
 	Class<? extends Annotation>[] annotations() default {};
 }
-
 ```
 
 > 首先，`ControllerAdvice`本质上是一个`Component`，因此也会被当成组建扫描，一视同仁。
@@ -717,15 +714,16 @@ spring security 接口 RequestMatcher 用于匹配路径,对路径做特殊的�
 
 apache shiro的话，简单，易用，功能也强大，spring官网就是用的shiro，可见shiro的强大
 
-## 4、如何理解Spring Boot中的Starter
+## 4. 如何理解Spring Boot中的Starter
 
-​	如果使用Spring + SpringMVC的话，要使用 MyBatis 等框架，就需要在xml文件中定义MyBatis需要的Bean。但是如果使用Spring Boot的话，开发人员只需要将相应的 starter 包依赖进应用，进行相应的熟悉配置，就可以直接进行开发了，比如 `mybatis-spring-boot-starter, spring-boot-starter-redis`。
+​	如果使用 `Spring + SpringMVC` 的话，要使用 `MyBatis` 等框架，就需要在xml文件中定义MyBatis需要的Bean。但是如果使用Spring Boot的话，开发人员只需要将相应的 starter 包依赖进应用，进行相应的熟悉配置，就可以直接进行开发了，比如 `mybatis-spring-boot-starter, spring-boot-starter-redis`。
 
 ​	比如说MyBatis的starter，就是定义一个 starter 的 jar 包，在里面写一个 `@Configuration` 配置类，将需要的bean定义在这个配置类里面，然后在starter包的 `META-IBF/spring.factories` 中写入该配置类，spring boot就会按照约定来加载这些配置类。
 
-## 5、SpringBoot的常用注解
+## 5. SpringBoot的常用注解
 
 - **`@SpringBootApplication` 注解**：**包含了`@SpringBootConfiguration`，`@EnableAutoConfiguration`，`@ComponentScan`这三个注解。**
+  
   - `@SpringBootConfiguration`: 标注当前类是配置类，这个注解继承自 `@Configuration`。并会将当前类内声明的一个或多个以 `@Bean` 注解标记的方法的实例纳入到spring容器中，并且实例名就是方法名。
   - `@EnableAutoConfiguration` : 是自动配置的注解，这个注解会根据我们添加的组件jar来完成一些默认配置，我们会添加spring-boot-starter-web这个组件jar的pom依赖，这样配置会默认配置springmvc 和tomcat。
   - `@ComponentScan` : 标识扫描路径，因为默认是没有配置实际扫描路径，所以SpringBoot扫描的路径是启动类所在的当前⽬录。
@@ -806,9 +804,9 @@ apache shiro的话，简单，易用，功能也强大，spring官网就是用�
 
   - 如果有两个 `RequestMapping` 的url是一样的, **后端编译无法通过，前端会报500错误。**
 
-## 6、SpringBoot Bean
+## 6. SpringBoot Bean
 
-### 6.1、Spring Boot中 Bean的加载过程
+### 6.1 Spring Boot中 Bean的加载过程
 
 https://blog.csdn.net/caoyuanyenang/article/details/110505166
 
@@ -818,13 +816,13 @@ https://blog.csdn.net/caoyuanyenang/article/details/110505166
 
 <img src="https://img-blog.csdnimg.cn/20210304135252666.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2Nhb3l1YW55ZW5hbmc=,size_16,color_FFFFFF,t_70">
 
-## 7、WebMvcConfigurer
+## 7. WebMvcConfigurer
 
-### 7.1、简介
+### 7.1 简介
 
 `WebMvcConfigurer` 配置类其实是`Spring`内部的一种配置方式，采用`JavaBean`的形式来代替传统的`xml`配置文件形式进行针对框架个性化定制，可以自定义一些Handler，Interceptor，ViewResolver，MessageConverter。基于java-based方式的spring mvc配置，需要创建一个**配置类并实现`WebMvcConfigurer`接口**；
 
-### 7.2、常用方法
+### 7.2 常用方法
 
 ```java
 public interface WebMvcConfigurer {
