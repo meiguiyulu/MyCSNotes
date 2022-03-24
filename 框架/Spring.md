@@ -2373,6 +2373,63 @@ public @interface Async {
 - 被 `@Async` 注解修饰的方法，返回值只能是 void 或者 Future。
 - 核心线程数配置是 8 ，队列长度应该是 `Integer.MAX_VALUE`。
 
+##### `@PathVariable`和 `@RequestParam`
+
+- `@PathVariable` 的作用是在参数里用来提取 `url` 中的请求参数
+
+  - ```java
+    请求url例如:127.0.0.1:8080/user/2 
+     
+    @GetMapping("/user/{id}")
+    BrandDTO findBrandById(@PathVariable("id") Long id);
+    ```
+
+- `@RequestParam` 的作用也是提取请求中的参数
+
+  - ```java
+    请求url例如:127.0.0.1:8080/user?id=2
+    
+    @GetMapping("/user")
+    SpuDetailDTO findSpuDetailById(@RequestParam("id") Long id);
+    ```
+
+##### `@RequestBody`
+
+- 作用：接收**前端传递给后端**的 **json字符串中的数据**(请求体中的数据的)；
+
+- 要求：
+
+  - `GET` 方式无请求体，所以使用 `@RequestBody` 接收数据时，前端不能使用 `GET` 方式提交数据，而是用 `POST` 方式进行提交。
+  - 在后端的同一个接收方法里，`@RequestBody` 与 `@RequestParam()` 可以同时使用，`@RequestBody` 最多只能有一个，而 `@RequestParam()` 可以有多个
+    - 一个请求只有一个 `@RequestBody`；
+    - 一个请求可以有多个 `@RequestParam`。
+
+- 源码分析：
+
+  - ```java
+    /**
+     * Annotation indicating a method parameter should be bound to the body of the web request.
+     * The body of the request is passed through an {@link HttpMessageConverter} to resolve the
+     * method argument depending on the content type of the request. Optionally, automatic
+     * validation can be applied by annotating the argument with {@code @Valid}.
+     */
+    @Target(ElementType.PARAMETER)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Documented
+    public @interface RequestBody {
+        /**
+         * Whether body content is required.
+         * <p>Default is {@code true}, leading to an exception thrown in case
+         * there is no body content. Switch this to {@code false} if you prefer
+         * {@code null} to be passed when the body content is {@code null}.
+         * @since 3.2
+         */
+        boolean required() default true;
+    }
+    ```
+
+  - 
+
 **************
 
 
